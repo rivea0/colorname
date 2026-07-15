@@ -1,4 +1,11 @@
-use clap::{Args, Parser};
+use clap::{Args, Parser, ValueEnum};
+
+#[derive(ValueEnum, PartialEq, Eq, Clone, Debug)]
+pub enum OutputFormats {
+    Html,
+    Json,
+    Csv,
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "colorname")]
@@ -9,7 +16,9 @@ pub struct Cli {
     #[command(flatten)]
     pub source_list: SourceList,
     #[arg(long)]
-    pub with_info: bool
+    pub with_info: bool,
+    #[arg(value_enum, long, short = 'o')]
+    pub output: Option<OutputFormats>
 }
 
 #[derive(Args, Debug, Default, PartialEq, Eq)]

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-use crate::command::SourceList;
+use crate::command::{SourceList, OutputFormats};
 
 use colorname::models::{Color, ColorItem, ColorNameLists};
 
@@ -13,6 +13,18 @@ pub fn read_lists_from_file<P: AsRef<Path>>(path: P) -> Result<ColorNameLists, B
     let lst = serde_json::from_reader(reader)?;
 
     Ok(lst)
+}
+
+pub fn write_to_file(file_type: OutputFormats) {
+    if file_type == OutputFormats::Html {
+        println!("Creating html file...");
+    }
+    if file_type == OutputFormats::Json {
+        println!("Creating json file...");
+    }
+    if file_type == OutputFormats::Csv {
+        println!("Creating csv file...");
+    }
 }
 
 pub fn get_colors<T>(color_name: &str, list: &Vec<T>, with_info: bool) -> Vec<Color>
