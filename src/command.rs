@@ -8,6 +8,8 @@ pub struct Cli {
     pub pattern: String,
     #[command(flatten)]
     pub source_list: SourceList,
+    #[arg(long)]
+    pub with_info: bool
 }
 
 #[derive(Args, Debug, Default, PartialEq, Eq)]
