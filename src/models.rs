@@ -6,6 +6,7 @@ pub struct Color {
     pub name: String,
     pub hex: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub meta: Option<BTreeMap<String, String>>,
 }
 
