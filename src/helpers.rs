@@ -1,11 +1,21 @@
 use std::error::Error;
+use std::fmt::Write;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Write as IoWrite;
 use std::path::Path;
 
-use crate::command::{SourceList, OutputFormats};
+use crate::command::{OutputFormats, SourceList};
 
 use colorname::models::{Color, ColorItem, ColorNameLists};
+
+fn escape_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
 
 pub fn read_lists_from_file<P: AsRef<Path>>(path: P) -> Result<ColorNameLists, Box<dyn Error>> {
     let file = File::open(path)?;
@@ -15,15 +25,58 @@ pub fn read_lists_from_file<P: AsRef<Path>>(path: P) -> Result<ColorNameLists, B
     Ok(lst)
 }
 
-pub fn write_to_file(file_type: OutputFormats) {
+pub fn write_to_file(file_type: OutputFormats, result: &Vec<Color>) {
     if file_type == OutputFormats::Html {
         println!("Creating html file...");
+
+        let mut rows = String::new();
+
+        for color in result.iter() {
+            let name = escape_html(&color.name);
+            let hex = escape_html(&color.hex);
+            write!(
+                rows,
+               "    <div class=\"color-container\">\n      <div style=\"background-color: {hex};\"></div>\n      <p>{name}</p>\n      <p>{hex}</p>\n    </div>\n"
+            ).unwrap();
+        }
+
+        let html = format!(
+            r#"<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>colors</title>
+  </head>
+  <style>
+    body {{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }}
+    .color-container > div {{
+      width: 200px;
+      height: 150px;
+    }}
+  </style>
+  <body>
+{rows}  </body>
+</html>"#
+        );
+
+        // Will override
+        let mut f = File::create("./colorname-output.html").unwrap();
+        f.write_all(html.as_bytes()).unwrap();
     }
     if file_type == OutputFormats::Json {
         println!("Creating json file...");
+        // create json string, populate fields from result
+        // write string to file
     }
     if file_type == OutputFormats::Csv {
         println!("Creating csv file...");
+        // create csv string, populate fields from result
+        // write string to file
     }
 }
 

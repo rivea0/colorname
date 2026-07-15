@@ -16,13 +16,13 @@ fn main() {
     let result = find_in_lists(pattern, &source_list, with_info);
     match output_format {
         Some(OutputFormats::Html) => {
-            write_to_file(OutputFormats::Html);
+            write_to_file(OutputFormats::Html, &result);
         },
         Some(OutputFormats::Json) => {
-            write_to_file(OutputFormats::Json);
+            write_to_file(OutputFormats::Json, &result);
         },
         Some(OutputFormats::Csv) => {
-            write_to_file(OutputFormats::Csv);
+            write_to_file(OutputFormats::Csv, &result);
         },
         None => {
             println!("No output format given!");
