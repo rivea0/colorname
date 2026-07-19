@@ -124,7 +124,6 @@ impl ColorNameLists {
     }
 
     pub fn get_colors_from_list(
-        &self,
         pattern: &str,
         list: &Vec<Color>,
         with_info: bool,
@@ -153,8 +152,10 @@ impl ColorNameLists {
         Some(v)
     }
 
-    fn source_list_to_map(data: Self) -> HashMap<Lists, Vec<Color>> {
-        HashMap::from([
+    fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>, Box<dyn std::error::Error>> {
+        let data = Self::read_from_file()?;
+
+        Ok(HashMap::from([
             (Lists::Wikipedia, data.wikipedia),
             (Lists::French, data.french),
             (Lists::Spanish, data.spanish),
@@ -191,27 +192,25 @@ impl ColorNameLists {
             (Lists::MlmcPolish, data.mlmc_polish),
             (Lists::MlmcPersian, data.mlmc_persian),
             (Lists::MlmcFrench, data.mlmc_french),
-        ])
+        ]))
     }
 
     pub fn search(
-        &self,
         pattern: &str,
         enabled_lists: Vec<Lists>,
         with_info: bool,
-    ) -> HashMap<Lists, Vec<Color>> {
-        let data = Self::read_from_file().unwrap();
-        let mapping = Self::source_list_to_map(data);
-
+    ) -> Option<HashMap<Lists, Vec<Color>>> {
         let mut result = HashMap::new();
 
-        for list in enabled_lists {
-            let colors = self
-                .get_colors_from_list(pattern, mapping.get(&list).unwrap(), with_info)
-                .unwrap();
-            result.insert(list, colors);
+        if let Some(mapping) = Self::source_list_to_map().ok() {
+            for list in enabled_lists {
+                if let Some(colors) = Self::get_colors_from_list(pattern, mapping.get(&list)?, with_info)
+                {
+                    result.insert(list, colors);
+                }
+            }
         }
 
-        result
+        (!result.is_empty()).then_some(result)
     }
 }
