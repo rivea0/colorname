@@ -56,13 +56,7 @@ pub struct Color {
     pub meta: Option<BTreeMap<String, String>>,
 }
 
-pub trait ColorItem {
-    fn name(&self) -> &str;
-    fn hex(&self) -> &str;
-    fn meta(&self) -> &Option<BTreeMap<String, String>>;
-}
-
-impl ColorItem for Color {
+impl Color {
     fn name(&self) -> &str {
         &self.name
     }
