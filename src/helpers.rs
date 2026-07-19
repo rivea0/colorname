@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
@@ -6,13 +7,14 @@ use std::io::Write as IoWrite;
 use crate::command::OutputFormats;
 use colorname::models::{Color, Lists};
 
-pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color>>) {
+pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color>>) -> Result<()> {
     if file_type == OutputFormats::Html {
         println!("Creating html file...");
         if !result.is_empty() {
-            let html = create_html_string(result);
-            let mut f = File::create("./colorname-output.html").unwrap();
-            f.write_all(html.as_bytes()).unwrap();
+            let html = create_html_string(result)
+                .with_context(|| format!("Could not create HTML string"))?;
+            let mut f = File::create("./colorname-output.html")?;
+            f.write_all(html.as_bytes())?;
         }
     }
     if file_type == OutputFormats::Json {
@@ -20,33 +22,32 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
         // if !result.is_empty() {
         //     let j = json!({"result": result});
         //     // Will override
-        //     let mut f = File::create("./colorname-output.json").unwrap();
-        //     f.write_all(j.to_string().as_bytes()).unwrap();
-        //     // Or if result is to be a ColorNameList
-        //     let f = File::create("./colorname-output.json")?;
-        //     serde_json::to_writer(BufWriter::new(file), &result)?;
+        //     let mut f = File::create("./colorname-output.json")?;
+        //     f.write_all(j.to_string().as_bytes())?;
         // }
     }
     if file_type == OutputFormats::Csv {
         println!("Creating csv file...");
     }
+
+    Ok(())
 }
 
-pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> String {
+pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
-        write!(rows, "    <h1>In list: {list_name:?}</h1>").unwrap();
+        write!(rows, "    <h1>In list: {list_name:?}</h1>")?;
         for color in colors.iter() {
             let name = escape_html(&color.name);
             let hex = escape_html(&color.hex);
             write!(
                 rows,
                 "    <div class=\"color-container\">\n      <div style=\"background-color: {hex};\"></div>\n      <p>{name}</p>\n      <p>{hex}</p>\n    </div>\n"
-            ).unwrap();
+            )?;
         }
     }
 
-    format!(
+    Ok(format!(
         r#"<!doctype html>
 <html lang="en">
   <head>
@@ -77,7 +78,7 @@ pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> String {
   <body>
 {rows}  </body>
 </html>"#
-    )
+    ))
 }
 
 fn escape_html(s: &str) -> String {

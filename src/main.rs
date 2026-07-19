@@ -21,13 +21,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{colors:#?}");
         match output_format {
             Some(OutputFormats::Html) => {
-                write_to_file(OutputFormats::Html, &colors);
+                write_to_file(OutputFormats::Html, &colors)?;
             }
             Some(OutputFormats::Json) => {
-                write_to_file(OutputFormats::Json, &colors);
+                write_to_file(OutputFormats::Json, &colors)?;
             }
             Some(OutputFormats::Csv) => {
-                write_to_file(OutputFormats::Csv, &colors);
+                write_to_file(OutputFormats::Csv, &colors)?;
             }
             None => {
                 // TODO: bail

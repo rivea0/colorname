@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
@@ -115,8 +116,9 @@ pub struct ColorNameLists {
 }
 
 impl ColorNameLists {
-    pub fn read_from_file() -> Result<Self, Box<dyn std::error::Error>> {
-        let file = File::open("./data/colorlists.json")?;
+    pub fn read_from_file() -> Result<Self> {
+        let file = File::open("./data/colorlists.json")
+            .with_context(|| format!("Failed to read file data/colorlists.json"))?;
         let reader = BufReader::new(file);
         let lst = serde_json::from_reader(reader)?;
 
@@ -152,8 +154,8 @@ impl ColorNameLists {
         Some(v)
     }
 
-    fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>, Box<dyn std::error::Error>> {
-        let data = Self::read_from_file()?;
+    fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>> {
+        let data = Self::read_from_file().with_context(|| format!("Failed parsing data"))?;
 
         Ok(HashMap::from([
             (Lists::Wikipedia, data.wikipedia),
@@ -204,7 +206,8 @@ impl ColorNameLists {
 
         if let Some(mapping) = Self::source_list_to_map().ok() {
             for list in enabled_lists {
-                if let Some(colors) = Self::get_colors_from_list(pattern, mapping.get(&list)?, with_info)
+                if let Some(colors) =
+                    Self::get_colors_from_list(pattern, mapping.get(&list)?, with_info)
                 {
                     result.insert(list, colors);
                 }
