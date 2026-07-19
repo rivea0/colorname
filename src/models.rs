@@ -1,10 +1,56 @@
-use serde::Deserialize;
-use std::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::fs::File;
+use std::io::BufReader;
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum Lists {
+    Wikipedia,
+    French,
+    Spanish,
+    German,
+    Ridgway,
+    Risograph,
+    Hindi,
+    Basic,
+    ChineseTraditional,
+    Html,
+    JapaneseTraditional,
+    LeCorbusier,
+    NbsIscc,
+    Ntc,
+    Osxcrayons,
+    Ral,
+    SanzoWadaI,
+    Thesaurus,
+    Werner,
+    Windows,
+    X11,
+    Xkcd,
+    MlmcKorean,
+    MlmcEnglish,
+    MlmcChinese,
+    MlmcRussian,
+    MlmcGerman,
+    MlmcSpanish,
+    MlmcFinnish,
+    MlmcDutch,
+    MlmcPortuguese,
+    MlmcRomanian,
+    MlmcSwedish,
+    MlmcPolish,
+    MlmcPersian,
+    MlmcFrench,
+}
+
+/// Color in a list, as represented in data/colorlists.json.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Color {
+    /// Color name
     pub name: String,
+    /// The hex code for the color
     pub hex: String,
+    /// When the user does not requests info (default behavior), the meta field should not be serialized.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub meta: Option<BTreeMap<String, String>>,
@@ -28,7 +74,8 @@ impl ColorItem for Color {
     }
 }
 
-#[derive(Deserialize, Debug)]
+/// Data in `data/colorlists.json`
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct ColorNameLists {
     pub wikipedia: Vec<Color>,
     pub french: Vec<Color>,
@@ -71,4 +118,106 @@ pub struct ColorNameLists {
     pub mlmc_polish: Vec<Color>,
     pub mlmc_persian: Vec<Color>,
     pub mlmc_french: Vec<Color>,
+}
+
+impl ColorNameLists {
+    pub fn read_from_file() -> Result<Self, Box<dyn std::error::Error>> {
+        let file = File::open("./data/colorlists.json")?;
+        let reader = BufReader::new(file);
+        let lst = serde_json::from_reader(reader)?;
+
+        Ok(lst)
+    }
+
+    pub fn get_colors_from_list(
+        &self,
+        pattern: &str,
+        list: &Vec<Color>,
+        with_info: bool,
+    ) -> Option<Vec<Color>> {
+        let mut v = vec![];
+        for color in list {
+            if color.name().to_lowercase().contains(pattern) {
+                if with_info {
+                    v.push(Color {
+                        name: color.name().to_string(),
+                        hex: color.hex().to_string(),
+                        meta: color.meta().clone(),
+                    });
+                } else {
+                    v.push(Color {
+                        name: color.name().to_string(),
+                        hex: color.hex().to_string(),
+                        meta: None,
+                    });
+                }
+            }
+        }
+        if v.is_empty() {
+            return None;
+        }
+        Some(v)
+    }
+
+    fn source_list_to_map(data: Self) -> HashMap<Lists, Vec<Color>> {
+        HashMap::from([
+            (Lists::Wikipedia, data.wikipedia),
+            (Lists::French, data.french),
+            (Lists::Spanish, data.spanish),
+            (Lists::German, data.german),
+            (Lists::Ridgway, data.ridgway),
+            (Lists::Risograph, data.risograph),
+            (Lists::Hindi, data.hindi),
+            (Lists::Basic, data.basic),
+            (Lists::ChineseTraditional, data.chinese_traditional),
+            (Lists::Html, data.html),
+            (Lists::JapaneseTraditional, data.japanese_traditional),
+            (Lists::LeCorbusier, data.le_corbusier),
+            (Lists::NbsIscc, data.nbs_iscc),
+            (Lists::Ntc, data.ntc),
+            (Lists::Osxcrayons, data.osxcrayons),
+            (Lists::Ral, data.ral),
+            (Lists::SanzoWadaI, data.sanzo_wada_i),
+            (Lists::Thesaurus, data.thesaurus),
+            (Lists::Werner, data.werner),
+            (Lists::Windows, data.windows),
+            (Lists::X11, data.x11),
+            (Lists::Xkcd, data.xkcd),
+            (Lists::MlmcKorean, data.mlmc_korean),
+            (Lists::MlmcEnglish, data.mlmc_english),
+            (Lists::MlmcChinese, data.mlmc_chinese),
+            (Lists::MlmcRussian, data.mlmc_russian),
+            (Lists::MlmcGerman, data.mlmc_german),
+            (Lists::MlmcSpanish, data.mlmc_spanish),
+            (Lists::MlmcFinnish, data.mlmc_finnish),
+            (Lists::MlmcDutch, data.mlmc_dutch),
+            (Lists::MlmcPortuguese, data.mlmc_portuguese),
+            (Lists::MlmcRomanian, data.mlmc_romanian),
+            (Lists::MlmcSwedish, data.mlmc_swedish),
+            (Lists::MlmcPolish, data.mlmc_polish),
+            (Lists::MlmcPersian, data.mlmc_persian),
+            (Lists::MlmcFrench, data.mlmc_french),
+        ])
+    }
+
+    pub fn search(
+        &self,
+        pattern: &str,
+        enabled_lists: Vec<Lists>,
+        with_info: bool,
+    ) -> HashMap<Lists, Vec<Color>> {
+        let data = Self::read_from_file().unwrap();
+        let mapping = Self::source_list_to_map(data);
+
+        let mut result = HashMap::new();
+
+        for list in enabled_lists {
+            let colors = self
+                .get_colors_from_list(pattern, mapping.get(&list).unwrap(), with_info)
+                .unwrap();
+            result.insert(list, colors);
+        }
+
+        result
+    }
 }
