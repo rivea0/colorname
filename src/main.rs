@@ -14,11 +14,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let source_list = &args.source_list;
     let with_info = args.with_info;
     let output_format = &args.output;
+    let is_quiet = &args.quiet;
     let result = ColorNameLists::search(pattern, source_list.enabled_lists(), with_info);
 
     if let Some(colors) = result {
-        // TODO: Use tabled display
-        println!("{colors:#?}");
         match output_format {
             Some(OutputFormats::Html) => {
                 write_to_file(OutputFormats::Html, &colors)?;
@@ -33,6 +32,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // TODO: bail
                 println!("No output format given!");
             }
+        }
+        if !is_quiet {
+            // TODO: Use tabled display
+            println!("{colors:#?}");
         }
     } else {
         println!("{pattern} is not found");

@@ -21,6 +21,8 @@ pub struct Cli {
     pub with_info: bool,
     #[arg(value_enum, long, short = 'o')]
     pub output: Option<OutputFormats>,
+    #[arg(long, short = 'q', requires = "output")]
+    pub quiet: bool,
 }
 
 #[derive(Args, Debug, Default, PartialEq, Eq)]
@@ -98,6 +100,16 @@ pub struct SourceList {
     pub xkcd: bool,
     #[arg(long)]
     pub x11: bool,
+    #[arg(long)]
+    pub all_en: bool,
+    #[arg(long)]
+    pub all_fr: bool,
+    #[arg(long)]
+    pub all_de: bool,
+    #[arg(long)]
+    pub all_es: bool,
+    #[arg(long)]
+    pub all_zh: bool,
 }
 
 impl SourceList {
@@ -211,6 +223,62 @@ impl SourceList {
         }
         if self.x11 {
             v.push(Lists::X11);
+        }
+        if self.all_en {
+            let en_lists = [
+                Lists::Basic,
+                Lists::Html,
+                Lists::MlmcEnglish,
+                Lists::NbsIscc,
+                Lists::Ntc,
+                Lists::Osxcrayons,
+                Lists::Ral,
+                Lists::Ridgway,
+                Lists::Risograph,
+                Lists::SanzoWadaI,
+                Lists::Thesaurus,
+                Lists::Werner,
+                Lists::Windows,
+                Lists::Wikipedia,
+                Lists::Xkcd,
+                Lists::X11,
+            ];
+
+            for list_name in en_lists {
+                v.push(list_name);
+            }
+        }
+
+        if self.all_fr {
+            let fr_lists = [Lists::French, Lists::LeCorbusier, Lists::MlmcFrench];
+
+            for list_name in fr_lists {
+                v.push(list_name);
+            }
+        }
+
+        if self.all_de {
+            let de_lists = [Lists::German, Lists::MlmcGerman];
+
+            for list_name in de_lists {
+                v.push(list_name);
+            }
+        }
+
+        if self.all_es {
+            let es_lists = [Lists::Spanish, Lists::MlmcSpanish];
+
+            for list_name in es_lists {
+                v.push(list_name);
+            }
+        }
+
+        if self.all_zh {
+            let zh_lists = [Lists::ChineseTraditional, Lists::MlmcChinese];
+
+            for list_name in zh_lists {
+                v.push(list_name);
+            }
         }
 
         // By default, list is wikipedia
