@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -13,7 +13,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
         println!("Creating html file...");
         if !result.is_empty() {
             let html = create_html_string(result)
-                .with_context(|| format!("Could not create HTML string"))?;
+                .with_context(|| "Could not create HTML string".to_string())?;
             let mut f = File::create("./colorname-output.html")?;
             f.write_all(html.as_bytes())?;
         }
@@ -45,7 +45,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
 pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
-        write!(rows, "    <h1>In list: {list_name:?}</h1>")?;
+        write!(rows, "    <h1>List: {list_name}</h1>")?;
         for color in colors.iter() {
             let name = escape_html(&color.name);
             let hex = escape_html(&color.hex);
@@ -70,6 +70,12 @@ pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String>
       padding: 0;
       box-sizing: border-box;
     }}
+    body {{
+      padding: 1rem;
+    }}
+    h1 {{
+      text-align: center;
+    }}
     .color-container {{
       display: flex;
       flex-direction: column;
@@ -90,22 +96,31 @@ pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String>
     ))
 }
 
-pub fn get_rgb(hex_str: &str) -> Result<[u8; 3]> {
+pub fn get_rgb_value(hex_str: &str) -> Result<[u8; 3]> {
     if hex_str.chars().count() != 7 {
-        eprintln!("Character count is wrong");
+        bail!(
+            "Expected 7 characters (such as #RRGGBB), got {}",
+            hex_str.chars().count()
+        );
     }
-    let first_char = hex_str.chars().nth(0).unwrap();
-    if first_char != '#' {
-        eprintln!("Not starting with hash");
+
+    if let Some(first_char) = hex_str.chars().next() {
+        if first_char != '#' {
+            bail!("Expected string to start with '#'");
+        }
     }
+
     // Remove the hash symbol
     let hex_str = &hex_str[1..];
-    if !hex_str.chars().all(|c| c.is_ascii_alphanumeric()) {
-        eprintln!("Wrong");
+    if !hex_str.chars().all(|c| c.is_ascii_hexdigit()) {
+        bail!("Expected only hex digits after '#'");
     }
-    let parts = [&hex_str[..2], &hex_str[2..4], &hex_str[4..]];
 
-    Ok(parts.map(|part| u8::from_str_radix(part, 16).unwrap()))
+    let r = u8::from_str_radix(&hex_str[..2], 16)?;
+    let g = u8::from_str_radix(&hex_str[2..4], 16)?;
+    let b = u8::from_str_radix(&hex_str[4..], 16)?;
+
+    Ok([r, g, b])
 }
 
 fn escape_html(s: &str) -> String {

@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
-use std::fmt;
 
 #[derive(Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Lists {
@@ -125,7 +125,7 @@ pub struct ColorNameLists {
 impl ColorNameLists {
     pub fn read_from_file() -> Result<Self> {
         let file = File::open("./data/colorlists.json")
-            .with_context(|| format!("Failed to read file data/colorlists.json"))?;
+            .with_context(|| "Failed to read file data/colorlists.json".to_string())?;
         let reader = BufReader::new(file);
         let lst = serde_json::from_reader(reader)?;
 
@@ -162,7 +162,7 @@ impl ColorNameLists {
     }
 
     fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>> {
-        let data = Self::read_from_file().with_context(|| format!("Failed parsing data"))?;
+        let data = Self::read_from_file().with_context(|| "Failed parsing data".to_string())?;
 
         Ok(HashMap::from([
             (Lists::Wikipedia, data.wikipedia),
@@ -211,7 +211,7 @@ impl ColorNameLists {
     ) -> Option<HashMap<Lists, Vec<Color>>> {
         let mut result = HashMap::new();
 
-        if let Some(mapping) = Self::source_list_to_map().ok() {
+        if let Ok(mapping) = Self::source_list_to_map() {
             for list in enabled_lists {
                 if let Some(colors) =
                     Self::get_colors_from_list(pattern, mapping.get(&list)?, with_info)
