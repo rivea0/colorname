@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
+use yansi::Paint;
 
 use crate::command::OutputFormats;
 use colorname::models::{Color, Lists};
@@ -123,6 +124,53 @@ pub fn get_rgb_value(hex_str: &str) -> Result<[u8; 3]> {
     let b = u8::from_str_radix(&hex_str[4..], 16)?;
 
     Ok([r, g, b])
+}
+
+pub fn print_header(list_name: Lists, styled: bool) {
+    println!("\nList: {list_name}");
+    if styled {
+        println!(
+            "{0: <30} | {1: <7} | {2: <5}",
+            "name".bold(),
+            "hex".bold(),
+            ""
+        );
+        println!("------------------------------------------------");
+    } else {
+        println!("{0: <30} | {1: <7}", "name", "hex");
+        println!("------------------------------------------------");
+    }
+}
+
+pub fn print_values(values: Vec<Color>, with_color: bool, with_info: bool) -> Result<()> {
+    for value in values {
+        if !with_color {
+            println!("{0: <30} | {1: <7}", value.name, value.hex);
+            if with_info {
+                for (key, val) in value.meta.as_ref().unwrap() {
+                    println!("{key}: {val}\n");
+                }
+            }
+        } else {
+            let rgb_vals = get_rgb_value(&value.hex)?;
+            println!(
+                "{0: <30} | {1: <7} | {2: <5}",
+                value.name.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
+                value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
+                "     "
+                    .to_string()
+                    .on_rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
+            );
+            if with_info {
+                for (key, val) in value.meta.as_ref().unwrap() {
+                    println!("{key}: {val}");
+                }
+            }
+        }
+        println!("------------------------------------------------");
+    }
+
+    Ok(())
 }
 
 fn escape_html(s: &str) -> String {
