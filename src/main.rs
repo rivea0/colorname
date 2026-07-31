@@ -1,12 +1,12 @@
 use clap::Parser;
-
+use yansi::Paint;
 use colorname::models::ColorNameLists;
 
 mod command;
 mod helpers;
 
 use crate::command::{Cli, OutputFormats};
-use crate::helpers::write_to_file;
+use crate::helpers::{get_rgb, write_to_file};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
@@ -35,7 +35,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         if !is_quiet {
             // TODO: Use tabled display
-            println!("{colors:#?}");
+            for (list_name, values) in colors {
+                println!("{}", format!("\nIn list {:?}:", list_name));
+                println!("{0: <30} | {1: <7}", "name".bold(), "hex".bold(),);
+                println!("----------------------------------------");
+                for value in values.iter() {
+                    let rgb_vals = get_rgb(&value.hex).unwrap();
+                    println!(
+                        "{0: <30} | {1: <7}",
+                        value.name.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
+                        value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
+                    );
+                }
+            }
         }
     } else {
         println!("{pattern} is not found");

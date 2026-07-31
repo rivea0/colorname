@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
+use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
-use serde_json::json;
 
 use crate::command::OutputFormats;
 use colorname::models::{Color, Lists};
@@ -88,6 +88,24 @@ pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String>
 {rows}  </body>
 </html>"#
     ))
+}
+
+pub fn get_rgb(hex_str: &str) -> Result<[u8; 3]> {
+    if hex_str.chars().count() != 7 {
+        eprintln!("Character count is wrong");
+    }
+    let first_char = hex_str.chars().nth(0).unwrap();
+    if first_char != '#' {
+        eprintln!("Not starting with hash");
+    }
+    // Remove the hash symbol
+    let hex_str = &hex_str[1..];
+    if !hex_str.chars().all(|c| c.is_ascii_alphanumeric()) {
+        eprintln!("Wrong");
+    }
+    let parts = [&hex_str[..2], &hex_str[2..4], &hex_str[4..]];
+
+    Ok(parts.map(|part| u8::from_str_radix(part, 16).unwrap()))
 }
 
 fn escape_html(s: &str) -> String {
