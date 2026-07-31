@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io::BufReader;
+use std::fmt;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Lists {
     Wikipedia,
     French,
@@ -42,6 +43,12 @@ pub enum Lists {
     MlmcPolish,
     MlmcPersian,
     MlmcFrench,
+}
+
+impl fmt::Display for Lists {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 /// Color in a list, as represented in data/colorlists.json.

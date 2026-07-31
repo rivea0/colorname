@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
+use serde_json::json;
 
 use crate::command::OutputFormats;
 use colorname::models::{Color, Lists};
@@ -19,15 +20,23 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
     }
     if file_type == OutputFormats::Json {
         println!("Creating json file...");
-        // if !result.is_empty() {
-        //     let j = json!({"result": result});
-        //     // Will override
-        //     let mut f = File::create("./colorname-output.json")?;
-        //     f.write_all(j.to_string().as_bytes())?;
-        // }
+        if !result.is_empty() {
+            let j = json!({"result": result});
+            // Will override
+            let mut f = File::create("./colorname-output.json")?;
+            f.write_all(j.to_string().as_bytes())?;
+        }
     }
     if file_type == OutputFormats::Csv {
         println!("Creating csv file...");
+        File::create("./colorname-output.csv")?;
+        let mut wtr = csv::Writer::from_path("./colorname-output.csv")?;
+        wtr.write_record(["Name", "Hex", "List"])?;
+        for (list_name, values) in result {
+            for value in values {
+                wtr.write_record([&value.name, &value.hex, &list_name.to_string()])?;
+            }
+        }
     }
 
     Ok(())
