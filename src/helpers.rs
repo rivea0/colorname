@@ -12,6 +12,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
     if file_type == OutputFormats::Html {
         println!("Creating html file...");
         if !result.is_empty() {
+            // TODO: add meta fields if with_info is present
             let html = create_html_string(result)
                 .with_context(|| "Could not create HTML string".to_string())?;
             let mut f = File::create("./colorname-output.html")?;
@@ -34,6 +35,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
         wtr.write_record(["Name", "Hex", "List"])?;
         for (list_name, values) in result {
             for value in values {
+                // TODO: add meta fields if with_info is present
                 wtr.write_record([&value.name, &value.hex, &list_name.to_string()])?;
             }
         }
