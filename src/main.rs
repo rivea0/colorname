@@ -57,6 +57,11 @@ fn main() -> Result<()> {
                 for value in values.iter() {
                     if !with_color {
                         println!("{0: <30} | {1: <7}", value.name, value.hex);
+                        if with_info {
+                            for (key, val) in value.meta.as_ref().unwrap() {
+                                println!("{key}: {val}\n");
+                            }
+                        }
                     } else {
                         let rgb_vals = get_rgb_value(&value.hex)?;
                         println!(
@@ -65,6 +70,11 @@ fn main() -> Result<()> {
                             value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
                             format!("     ").on_rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
                         );
+                        if with_info {
+                            for (key, val) in value.meta.as_ref().unwrap() {
+                                println!("{key}: {val}\n");
+                            }
+                        }
                     }
                 }
             }
