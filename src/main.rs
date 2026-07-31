@@ -33,17 +33,39 @@ fn main() -> Result<()> {
             }
         }
         if !is_quiet {
+            let mut with_color = true;
+            if std::env::var("NO_COLOR").is_ok() {
+                with_color = false;
+            }
+
+            // If truecolor is not supported, will not render as expected (https://github.com/SergioBenitez/yansi/issues/15)
             for (list_name, values) in colors {
                 println!("{}", format!("\nList {:?}:", list_name));
-                println!("{0: <30} | {1: <7}", "name".bold(), "hex".bold(),);
-                println!("----------------------------------------");
-                for value in values.iter() {
-                    let rgb_vals = get_rgb_value(&value.hex).unwrap();
+                if !with_color {
+                    println!("{0: <30} | {1: <7}", "name", "hex");
+                    println!("----------------------------------------");
+                } else {
                     println!(
-                        "{0: <30} | {1: <7}",
-                        value.name.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
-                        value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
+                        "{0: <30} | {1: <7} | {2: <5}",
+                        "name".bold(),
+                        "hex".bold(),
+                        ""
                     );
+                    println!("------------------------------------------------");
+                }
+
+                for value in values.iter() {
+                    if !with_color {
+                        println!("{0: <30} | {1: <7}", value.name, value.hex);
+                    } else {
+                        let rgb_vals = get_rgb_value(&value.hex)?;
+                        println!(
+                            "{0: <30} | {1: <7} | {2: <5}",
+                            value.name.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
+                            value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
+                            format!("     ").on_rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
+                        );
+                    }
                 }
             }
         }
