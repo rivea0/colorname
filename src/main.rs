@@ -5,7 +5,7 @@ use colorname::models::ColorNameLists;
 mod command;
 mod helpers;
 
-use crate::command::{Cli, OutputFormats};
+use crate::command::Cli;
 use crate::helpers::{print_header, print_values, write_to_file};
 
 fn main() -> Result<()> {
@@ -17,18 +17,8 @@ fn main() -> Result<()> {
     );
 
     if let Some(result) = result {
-        if let Some(output_format) = &args.output {
-            match output_format {
-                OutputFormats::Html => {
-                    write_to_file(OutputFormats::Html, &result)?;
-                }
-                OutputFormats::Json => {
-                    write_to_file(OutputFormats::Json, &result)?;
-                }
-                OutputFormats::Csv => {
-                    write_to_file(OutputFormats::Csv, &result)?;
-                }
-            }
+        if let Some(output_format) = args.output {
+            write_to_file(output_format, &result)?;
         }
         if !args.quiet {
             let mut with_color = true;

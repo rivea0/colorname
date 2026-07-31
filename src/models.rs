@@ -204,9 +204,8 @@ impl ColorNameLists {
                 colors
                     .into_iter()
                     .map(|color_item| Color {
-                        name: color_item.name().to_string(),
-                        hex: color_item.hex().to_string(),
                         meta: None,
+                        ..color_item
                     })
                     .collect()
             };
