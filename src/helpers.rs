@@ -106,10 +106,10 @@ pub fn get_rgb_value(hex_str: &str) -> Result<[u8; 3]> {
         );
     }
 
-    if let Some(first_char) = hex_str.chars().next() {
-        if first_char != '#' {
-            bail!("Expected string to start with '#'");
-        }
+    if let Some(first_char) = hex_str.chars().next()
+        && first_char != '#'
+    {
+        bail!("Expected string to start with '#'");
     }
 
     // Remove the hash symbol
