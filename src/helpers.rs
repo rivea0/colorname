@@ -146,8 +146,8 @@ pub fn print_values(values: Vec<Color>, with_color: bool, with_info: bool) -> Re
     for value in values {
         if !with_color {
             println!("{0: <30} | {1: <7}", value.name, value.hex);
-            if with_info {
-                for (key, val) in value.meta.as_ref().unwrap() {
+            if with_info && let Some(meta_values) = value.meta {
+                for (key, val) in meta_values {
                     println!("{key}: {val}\n");
                 }
             }
@@ -161,9 +161,9 @@ pub fn print_values(values: Vec<Color>, with_color: bool, with_info: bool) -> Re
                     .to_string()
                     .on_rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
             );
-            if with_info {
-                for (key, val) in value.meta.as_ref().unwrap() {
-                    println!("{key}: {val}");
+            if with_info && let Some(meta_values) = value.meta {
+                for (key, val) in meta_values {
+                    println!("{key}: {val}\n");
                 }
             }
         }

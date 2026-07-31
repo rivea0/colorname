@@ -132,33 +132,16 @@ impl ColorNameLists {
         Ok(lst)
     }
 
-    pub fn get_colors_from_list(
-        pattern: &str,
-        list: &Vec<Color>,
-        with_info: bool,
-    ) -> Option<Vec<Color>> {
-        let mut v = vec![];
-        for color in list {
-            if color.name().to_lowercase().contains(pattern) {
-                if with_info {
-                    v.push(Color {
-                        name: color.name().to_string(),
-                        hex: color.hex().to_string(),
-                        meta: color.meta().clone(),
-                    });
-                } else {
-                    v.push(Color {
-                        name: color.name().to_string(),
-                        hex: color.hex().to_string(),
-                        meta: None,
-                    });
-                }
-            }
-        }
-        if v.is_empty() {
-            return None;
-        }
-        Some(v)
+    pub fn get_colors_from_list(pattern: &str, list: &[Color]) -> Vec<Color> {
+        let pattern = pattern.to_lowercase();
+        list.iter()
+            .filter(|color| color.name().to_lowercase().contains(&pattern))
+            .map(|color| Color {
+                name: color.name().to_string(),
+                hex: color.hex().to_string(),
+                meta: color.meta().clone(),
+            })
+            .collect::<Vec<_>>()
     }
 
     fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>> {
@@ -211,16 +194,26 @@ impl ColorNameLists {
     ) -> Option<HashMap<Lists, Vec<Color>>> {
         let mut result = HashMap::new();
 
-        if let Ok(mapping) = Self::source_list_to_map() {
-            for list in enabled_lists {
-                if let Some(colors) =
-                    Self::get_colors_from_list(pattern, mapping.get(&list)?, with_info)
-                {
-                    result.insert(list, colors);
-                }
-            }
+        let mapping = Self::source_list_to_map().ok()?;
+
+        for list in enabled_lists {
+            let colors = Self::get_colors_from_list(pattern, mapping.get(&list)?);
+            let colors = if with_info {
+                colors
+            } else {
+                colors
+                    .into_iter()
+                    .map(|color_item| Color {
+                        name: color_item.name().to_string(),
+                        hex: color_item.hex().to_string(),
+                        meta: None,
+                    })
+                    .collect()
+            };
+
+            result.insert(list, colors);
         }
 
-        (!result.is_empty()).then_some(result)
+        Some(result)
     }
 }
