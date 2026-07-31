@@ -312,14 +312,19 @@ If metadata exists for colors in the list, include the metadata.
 #### Output formats
 
 ##### `--html`
+Export to HTML. Creates `colorname-output.html` in current directory.
 
 ##### `--json`
+Export to JSON. Creates `colorname-output.json` in current directory.
 
 ##### `--csv`
+Export to CSV. Creates `colorname-output.csv` in current directory.
+
+#### Other options
 
 ##### `--quiet` (`-q`)
+Don't display output in terminal if the output format is given
 
-#### Open in browser with `--show`
 
 
 
