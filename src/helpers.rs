@@ -47,14 +47,20 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
 pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
-        write!(rows, "    <h1>List: {list_name}</h1>")?;
+        writeln!(rows, "    <h1>List: {list_name}</h1>")?;
         for color in colors.iter() {
             let name = escape_html(&color.name);
             let hex = escape_html(&color.hex);
-            write!(
+            writeln!(
                 rows,
-                "    <div class=\"color-container\">\n      <div style=\"background-color: {hex};\"></div>\n      <p>{name}</p>\n      <p>{hex}</p>\n    </div>\n"
+                "    <div class=\"color-container\">\n      <div style=\"background-color: {hex};\"></div>\n      <p>{name}</p>\n      <p>{hex}</p>"
             )?;
+            if let Some(metadata) = &color.meta {
+                for (k, v) in metadata {
+                    writeln!(rows, "      <p>{k}: {v}</p>")?;
+                }
+            }
+            writeln!(rows, "    </div>")?;
         }
     }
 
@@ -90,7 +96,7 @@ pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String>
       width: calc(100vw - 25%);
       height: 8rem;
       border-radius: 1rem;
-    }}        
+    }}
   </style>
   <body>
 {rows}  </body>
