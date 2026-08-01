@@ -14,8 +14,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
         println!("Creating html file...");
         if !result.is_empty() {
             // TODO: add meta fields if with_info is present
-            let html = create_html_string(result)
-                .with_context(|| "Could not create HTML string".to_string())?;
+            let html = create_html_string(result).context("Could not create HTML string")?;
             let mut f = File::create("./colorname-output.html")?;
             f.write_all(html.as_bytes())?;
         }

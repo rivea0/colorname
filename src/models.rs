@@ -145,7 +145,7 @@ impl ColorNameLists {
     }
 
     fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>> {
-        let data = Self::read_from_file().with_context(|| "Failed parsing data".to_string())?;
+        let data = Self::read_from_file().context("Failed parsing data")?;
 
         Ok(HashMap::from([
             (Lists::Wikipedia, data.wikipedia),
