@@ -198,6 +198,9 @@ impl ColorNameLists {
 
         for list in enabled_lists {
             let colors = Self::get_colors_from_list(pattern, mapping.get(&list)?);
+            if colors.is_empty() {
+                continue;
+            }
             let colors = if with_info {
                 colors
             } else {
