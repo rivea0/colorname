@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
@@ -13,7 +13,6 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
         OutputFormats::Html => {
             println!("Creating html file...");
             if !result.is_empty() {
-                // TODO: add meta fields if with_info is present
                 let html = create_html_string(result).context("Could not create HTML string")?;
                 let mut f = File::create("./colorname-output.html")?;
                 f.write_all(html.as_bytes())?;
@@ -27,15 +26,52 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
                 serde_json::to_writer(f, result)?;
             }
         }
+
         OutputFormats::Csv => {
             println!("Creating csv file...");
             File::create("./colorname-output.csv")?;
             let mut wtr = csv::Writer::from_path("./colorname-output.csv")?;
-            wtr.write_record(["Name", "Hex", "List"])?;
-            for (list_name, values) in result {
-                for value in values {
-                    // TODO: add meta fields if with_info is present
-                    wtr.write_record([&value.name, &value.hex, &list_name.to_string()])?;
+
+            let default_headers = ["list", "name", "hex"];
+            let mut headers = Vec::from(default_headers);
+            let mut seen = HashSet::new();
+
+            for metadata_key in result
+                .values()
+                .flat_map(|colors| colors.iter())
+                .filter_map(|color| color.meta.as_ref())
+                .flat_map(|metadata| metadata.keys())
+            {
+                if seen.insert(metadata_key) {
+                    headers.push(metadata_key);
+                }
+            }
+
+            wtr.write_record(&headers)?;
+
+            let meta_headers = &headers[default_headers.len()..];
+
+            for (list_name, colors) in result.iter() {
+                for color in colors {
+                    let mut values = csv::StringRecord::new();
+                    values.push_field(&list_name.to_string());
+                    values.push_field(&color.name);
+                    values.push_field(&color.hex);
+                    if let Some(metadata) = &color.meta {
+                        for header in meta_headers {
+                            // Add empty fields if a metadata header doesn't exist in a color
+                            let header_str =
+                                metadata.get(*header).map(|s| s.as_str()).unwrap_or("");
+                            values.push_field(header_str);
+                        }
+                    // For colors that don't have metadata, fill all fields with
+                    // empty values for all headers except the default ones
+                    } else {
+                        for _ in 0..meta_headers.len() {
+                            values.push_field("");
+                        }
+                    }
+                    wtr.write_record(&values)?;
                 }
             }
         }
