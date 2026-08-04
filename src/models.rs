@@ -123,7 +123,7 @@ pub struct ColorNameLists {
 }
 
 impl ColorNameLists {
-    pub fn read_from_file() -> Result<Self> {
+    fn read_from_file() -> Result<Self> {
         let file = File::open("./data/colorlists.json")
             .with_context(|| "Failed to read file data/colorlists.json".to_string())?;
         let reader = BufReader::new(file);
@@ -132,7 +132,7 @@ impl ColorNameLists {
         Ok(lst)
     }
 
-    pub fn get_colors_from_list(pattern: &str, list: &[Color]) -> Vec<Color> {
+    fn get_colors_from_list(pattern: &str, list: &[Color]) -> Vec<Color> {
         let pattern = pattern.to_lowercase();
         list.iter()
             .filter(|color| color.name().to_lowercase().contains(&pattern))
@@ -216,6 +216,6 @@ impl ColorNameLists {
             result.insert(list, colors);
         }
 
-        Some(result)
+        (!result.is_empty()).then_some(result)
     }
 }
