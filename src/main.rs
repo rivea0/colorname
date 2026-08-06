@@ -17,8 +17,8 @@ fn main() -> Result<()> {
     );
 
     if let Some(result) = result {
-        if let Some(output_format) = args.output {
-            write_to_file(output_format, &result)?;
+        if let (Some(output_format), Some(file_path)) = (args.output, args.file_path) {
+            write_to_file(output_format, &result, file_path)?;
         }
         if !args.quiet {
             let mut with_color = true;

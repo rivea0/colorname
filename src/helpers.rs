@@ -3,18 +3,24 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
+use std::path::Path;
 use yansi::Paint;
 
 use crate::command::OutputFormats;
 use colorname::models::{Color, Lists};
 
-pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color>>) -> Result<()> {
+pub fn write_to_file(
+    file_type: OutputFormats,
+    result: &HashMap<Lists, Vec<Color>>,
+    file_path: impl AsRef<Path>,
+) -> Result<()> {
+    let file_path = file_path.as_ref();
     match file_type {
         OutputFormats::Html => {
             println!("Creating html file...");
             if !result.is_empty() {
                 let html = create_html_string(result).context("Could not create HTML string")?;
-                let mut f = File::create("./colorname-output.html")?;
+                let mut f = File::create(file_path)?;
                 f.write_all(html.as_bytes())?;
             }
         }
@@ -22,15 +28,14 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
             println!("Creating json file...");
             if !result.is_empty() {
                 // Will override
-                let f = File::create("./colorname-output.json")?;
+                let f = File::create(file_path)?;
                 serde_json::to_writer(f, result)?;
             }
         }
 
         OutputFormats::Csv => {
             println!("Creating csv file...");
-            File::create("./colorname-output.csv")?;
-            let mut wtr = csv::Writer::from_path("./colorname-output.csv")?;
+            let mut wtr = csv::Writer::from_path(file_path)?;
 
             let default_headers = ["list", "name", "hex"];
             let mut headers = Vec::from(default_headers);
@@ -80,7 +85,7 @@ pub fn write_to_file(file_type: OutputFormats, result: &HashMap<Lists, Vec<Color
     Ok(())
 }
 
-pub fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
+fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
         writeln!(rows, "    <h1>List: {list_name}</h1>")?;
@@ -218,4 +223,258 @@ fn escape_html(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::BTreeMap, fs};
+
+    use super::*;
+
+    #[test]
+    fn write_to_file_creates_html() -> Result<()> {
+        let expected_text = format!(
+            r#"<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>colors</title>
+  </head>
+  <style>
+    * {{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }}
+    body {{
+      padding: 1rem;
+    }}
+    h1 {{
+      text-align: center;
+    }}
+    .color-container {{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin: 4rem 0;
+      font-family: sans-serif;
+    }}
+    .color-container > div {{
+      width: calc(100vw - 25%);
+      height: 8rem;
+      border-radius: 1rem;
+    }}
+  </style>
+  <body>
+    <h1>List: Basic</h1>
+    <div class="color-container">
+      <div style="background-color: #000000;"></div>
+      <p>black</p>
+      <p>#000000</p>
+    </div>
+  </body>
+</html>"#
+        );
+
+        assert_output(OutputFormats::Html, "colors_output.html", &expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_to_file_creates_html_with_metadata() -> Result<()> {
+        let expected_text = format!(
+            r#"<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>colors</title>
+  </head>
+  <style>
+    * {{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }}
+    body {{
+      padding: 1rem;
+    }}
+    h1 {{
+      text-align: center;
+    }}
+    .color-container {{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin: 4rem 0;
+      font-family: sans-serif;
+    }}
+    .color-container > div {{
+      width: calc(100vw - 25%);
+      height: 8rem;
+      border-radius: 1rem;
+    }}
+  </style>
+  <body>
+    <h1>List: Wikipedia</h1>
+    <div class="color-container">
+      <div style="background-color: #000000;"></div>
+      <p>black</p>
+      <p>#000000</p>
+      <p>link: https://en.wikipedia.org/wiki/Black</p>
+    </div>
+  </body>
+</html>"#
+        );
+
+        assert_output_with_metadata(OutputFormats::Html, "colorname_output.html", &expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_to_file_creates_json() -> Result<()> {
+        let expected_text = format!(r##"{{"Basic":[{{"name":"black","hex":"#000000"}}]}}"##);
+
+        assert_output(OutputFormats::Json, "colorname_output.json", &expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_to_file_creates_json_with_metadata() -> Result<()> {
+        let expected_text = format!(
+            r##"{{"Wikipedia":[{{"name":"black","hex":"#000000","meta":{{"link":"https://en.wikipedia.org/wiki/Black"}}}}]}}"##
+        );
+
+        assert_output_with_metadata(OutputFormats::Json, "colorname_output.json", &expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_to_file_creates_csv() -> Result<()> {
+        let expected_text = "list,name,hex\nBasic,black,#000000\n";
+
+        assert_output(OutputFormats::Csv, "colorname_output.csv", expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn write_to_file_creates_csv_with_metadata() -> Result<()> {
+        let expected_text =
+            "list,name,hex,link\nWikipedia,black,#000000,https://en.wikipedia.org/wiki/Black\n";
+
+        assert_output_with_metadata(OutputFormats::Csv, "colorname_output.csv", expected_text)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_rgb_value_works_for_correct_input() -> Result<()> {
+        let result = get_rgb_value("#000000")?;
+        let expected = [0, 0, 0];
+
+        assert_eq!(result, expected);
+
+        let result = get_rgb_value("#ffffff")?;
+        let expected = [255, 255, 255];
+
+        assert_eq!(result, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_rgb_value_bails_when_given_incorrect_number_of_chars() -> Result<()> {
+        let result = get_rgb_value("000000").unwrap_err();
+
+        assert!(
+            result
+                .to_string()
+                .contains("Expected 7 characters (such as #RRGGBB), got 6")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_rgb_value_bails_when_input_starts_with_incorrect_char() -> Result<()> {
+        let result = get_rgb_value("+000000").unwrap_err();
+
+        assert!(
+            result
+                .to_string()
+                .contains("Expected string to start with '#'")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn get_rgb_value_bails_when_given_input_includes_non_hex_digits() -> Result<()> {
+        let result = get_rgb_value("#0000gg").unwrap_err();
+
+        assert!(
+            result
+                .to_string()
+                .contains("Expected only hex digits after '#'")
+        );
+
+        Ok(())
+    }
+
+    fn assert_output(output_format: OutputFormats, file_name: &str, expected: &str) -> Result<()> {
+        let dir = tempfile::tempdir()?;
+        let p = dir.path().join(file_name);
+
+        let res = HashMap::from([(
+            Lists::Basic,
+            vec![Color {
+                name: "black".to_string(),
+                hex: "#000000".to_string(),
+                meta: None,
+            }],
+        )]);
+
+        write_to_file(output_format, &res, &p)?;
+        let text = fs::read_to_string(p)?;
+
+        assert_eq!(text, expected);
+
+        Ok(())
+    }
+
+    fn assert_output_with_metadata(
+        output_format: OutputFormats,
+        file_name: &str,
+        expected: &str,
+    ) -> Result<()> {
+        let dir = tempfile::tempdir()?;
+        let p = dir.path().join(file_name);
+
+        let res = HashMap::from([(
+            Lists::Wikipedia,
+            vec![Color {
+                name: "black".to_string(),
+                hex: "#000000".to_string(),
+                meta: Some(BTreeMap::from([(
+                    "link".into(),
+                    "https://en.wikipedia.org/wiki/Black".into(),
+                )])),
+            }],
+        )]);
+
+        write_to_file(output_format, &res, &p)?;
+        let text = fs::read_to_string(p)?;
+
+        assert_eq!(text, expected);
+
+        Ok(())
+    }
 }

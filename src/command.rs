@@ -23,11 +23,14 @@ pub struct Cli {
     #[arg(long)]
     pub with_info: bool,
     /// Output format to export
-    #[arg(value_enum, long, short = 'o')]
+    #[arg(value_enum, long, short = 'o', requires = "file_path")]
     pub output: Option<OutputFormats>,
     /// Don't display output in terminal if the output format is given
     #[arg(long, short = 'q', requires = "output")]
     pub quiet: bool,
+    /// File path for the output
+    #[arg(long)]
+    pub file_path: Option<String>,
 }
 
 #[derive(Args, Debug, Default, PartialEq, Eq)]
