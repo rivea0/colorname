@@ -2,8 +2,6 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
-use std::fs::File;
-use std::io::BufReader;
 
 #[derive(Debug, Hash, PartialEq, Eq, Serialize)]
 pub enum Lists {
@@ -124,10 +122,8 @@ pub struct ColorNameLists {
 
 impl ColorNameLists {
     fn read_from_file() -> Result<Self> {
-        let file = File::open("./data/colorlists.json")
-            .with_context(|| "Failed to read file data/colorlists.json".to_string())?;
-        let reader = BufReader::new(file);
-        let lst = serde_json::from_reader(reader)?;
+        let res = include_str!(concat!(env!("OUT_DIR"), "/colorlists.json"));
+        let lst = serde_json::from_str(res)?;
 
         Ok(lst)
     }
