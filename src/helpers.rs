@@ -1,5 +1,6 @@
 use anyhow::{Context, Result, bail};
-use std::collections::{HashMap, HashSet};
+use indexmap::IndexSet;
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
@@ -38,18 +39,16 @@ pub fn write_to_file(
             let mut wtr = csv::Writer::from_path(file_path)?;
 
             let default_headers = ["list", "name", "hex"];
-            let mut headers = Vec::from(default_headers);
-            let mut seen = HashSet::new();
+            let mut headers = default_headers.into_iter().collect::<IndexSet<_>>();
 
             for metadata_key in result
                 .values()
                 .flat_map(|colors| colors.iter())
                 .filter_map(|color| color.meta.as_ref())
                 .flat_map(|metadata| metadata.keys())
+                .map(|key| key.as_str())
             {
-                if seen.insert(metadata_key) {
-                    headers.push(metadata_key);
-                }
+                headers.insert(metadata_key);
             }
 
             wtr.write_record(&headers)?;
@@ -62,19 +61,17 @@ pub fn write_to_file(
                     values.push_field(&list_name.to_string());
                     values.push_field(&color.name);
                     values.push_field(&color.hex);
-                    if let Some(metadata) = &color.meta {
-                        for header in meta_headers {
-                            // Add empty fields if a metadata header doesn't exist in a color
-                            let header_str =
-                                metadata.get(*header).map(|s| s.as_str()).unwrap_or("");
-                            values.push_field(header_str);
-                        }
-                    // For colors that don't have metadata, fill all fields with
-                    // empty values for all headers except the default ones
-                    } else {
-                        for _ in 0..meta_headers.len() {
-                            values.push_field("");
-                        }
+                    for header in meta_headers {
+                        // Add empty fields if a metadata header doesn't exist in a color.
+                        // For colors that don't have metadata, fill all fields with
+                        // empty values for all metadata headers
+                        let header_str = color
+                            .meta
+                            .as_ref()
+                            .and_then(|metadata| metadata.get(*header))
+                            .map(|s| s.as_str())
+                            .unwrap_or("");
+                        values.push_field(header_str);
                     }
                     wtr.write_record(&values)?;
                 }
@@ -371,6 +368,52 @@ mod tests {
             "list,name,hex,link\nWikipedia,black,#000000,https://en.wikipedia.org/wiki/Black\n";
 
         assert_output_with_metadata(OutputFormats::Csv, "colorname_output.csv", expected_text)?;
+
+        Ok(())
+    }
+
+    #[ignore]
+    #[test]
+    fn write_to_file_creates_csv_with_empty_metadata_fields() -> Result<()> {
+        let dir = tempfile::tempdir()?;
+        let p = dir.path().join("colorname_output.csv");
+
+        let res = HashMap::from([
+            (
+                Lists::Wikipedia,
+                vec![Color {
+                    name: "black".to_string(),
+                    hex: "#000000".to_string(),
+                    meta: Some(BTreeMap::from([(
+                        "link".into(),
+                        "https://en.wikipedia.org/wiki/Black".into(),
+                    )])),
+                }],
+            ),
+            (
+                Lists::Thesaurus,
+                vec![Color {
+                    name: "Black".to_string(),
+                    hex: "#000000".to_string(),
+                    meta: Some(BTreeMap::from([("category".into(), "black".into())])),
+                }],
+            ),
+            (
+                Lists::Basic,
+                vec![Color {
+                    name: "black".to_string(),
+                    hex: "#000000".to_string(),
+                    meta: None,
+                }],
+            ),
+        ]);
+
+        let expected_text = "list,name,hex,link,category\nWikipedia,black,#000000,https://en.wikipedia.org/wiki/Black,\nThesaurus,Black,#000000,,black\nBasic,black,#000000,,\n";
+
+        write_to_file(OutputFormats::Csv, &res, &p)?;
+        let text = fs::read_to_string(p)?;
+
+        assert_eq!(text, expected_text);
 
         Ok(())
     }
