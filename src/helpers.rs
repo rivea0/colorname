@@ -1,6 +1,5 @@
 use anyhow::{Context, Result, bail};
-use indexmap::IndexSet;
-use std::collections::HashMap;
+use indexmap::{IndexSet, IndexMap};
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
@@ -12,7 +11,7 @@ use colorname::models::{Color, Lists};
 
 pub fn write_to_file(
     file_type: OutputFormats,
-    result: &HashMap<Lists, Vec<Color>>,
+    result: &IndexMap<Lists, Vec<Color>>,
     file_path: impl AsRef<Path>,
 ) -> Result<()> {
     let file_path = file_path.as_ref();
@@ -82,7 +81,7 @@ pub fn write_to_file(
     Ok(())
 }
 
-fn create_html_string(result: &HashMap<Lists, Vec<Color>>) -> Result<String> {
+fn create_html_string(result: &IndexMap<Lists, Vec<Color>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
         writeln!(rows, "    <h1>List: {list_name}</h1>")?;
@@ -372,13 +371,12 @@ mod tests {
         Ok(())
     }
 
-    #[ignore]
     #[test]
     fn write_to_file_creates_csv_with_empty_metadata_fields() -> Result<()> {
         let dir = tempfile::tempdir()?;
         let p = dir.path().join("colorname_output.csv");
 
-        let res = HashMap::from([
+        let res = IndexMap::from([
             (
                 Lists::Wikipedia,
                 vec![Color {
@@ -476,7 +474,7 @@ mod tests {
         let dir = tempfile::tempdir()?;
         let p = dir.path().join(file_name);
 
-        let res = HashMap::from([(
+        let res = IndexMap::from([(
             Lists::Basic,
             vec![Color {
                 name: "black".to_string(),
@@ -501,7 +499,7 @@ mod tests {
         let dir = tempfile::tempdir()?;
         let p = dir.path().join(file_name);
 
-        let res = HashMap::from([(
+        let res = IndexMap::from([(
             Lists::Wikipedia,
             vec![Color {
                 name: "black".to_string(),

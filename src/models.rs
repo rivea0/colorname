@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fmt;
 
 #[derive(Debug, Hash, PartialEq, Eq, Serialize)]
@@ -140,10 +141,10 @@ impl ColorNameLists {
             .collect::<Vec<_>>()
     }
 
-    fn source_list_to_map() -> Result<HashMap<Lists, Vec<Color>>> {
+    fn source_list_to_map() -> Result<IndexMap<Lists, Vec<Color>>> {
         let data = Self::read_from_file().context("Failed parsing data")?;
 
-        Ok(HashMap::from([
+        Ok(IndexMap::from([
             (Lists::Wikipedia, data.wikipedia),
             (Lists::French, data.french),
             (Lists::Spanish, data.spanish),
@@ -187,8 +188,8 @@ impl ColorNameLists {
         pattern: &str,
         enabled_lists: Vec<Lists>,
         with_info: bool,
-    ) -> Option<HashMap<Lists, Vec<Color>>> {
-        let mut result = HashMap::new();
+    ) -> Option<IndexMap<Lists, Vec<Color>>> {
+        let mut result = IndexMap::new();
 
         let mapping = Self::source_list_to_map().ok()?;
 
