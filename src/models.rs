@@ -51,7 +51,7 @@ impl fmt::Display for Lists {
 }
 
 /// Color in a list, as represented in data/colorlists.json.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Color {
     /// Color name
     pub name: String,
@@ -214,5 +214,96 @@ impl ColorNameLists {
         }
 
         (!result.is_empty()).then_some(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_colors_from_list_returns_correct_colors() {
+        let result = ColorNameLists::get_colors_from_list(
+            "black",
+            &[
+                Color {
+                    name: "pink".into(),
+                    hex: "#ff69b4".into(),
+                    meta: None,
+                },
+                Color {
+                    name: "black".into(),
+                    hex: "#000000".into(),
+                    meta: None,
+                },
+            ],
+        );
+
+        assert_eq!(
+            result,
+            vec![Color {
+                name: "black".into(),
+                hex: "#000000".into(),
+                meta: None
+            }]
+        );
+
+        let result = ColorNameLists::get_colors_from_list(
+            "black",
+            &[
+                Color {
+                    name: "pink".into(),
+                    hex: "#ff69b4".into(),
+                    meta: None,
+                },
+                Color {
+                    name: "white".into(),
+                    hex: "#ffffff".into(),
+                    meta: None,
+                },
+            ],
+        );
+
+        let empty_vec: Vec<Color> = vec![];
+        assert_eq!(result, empty_vec);
+    }
+
+    #[test]
+    fn search_works() -> Result<()> {
+        let res =
+            ColorNameLists::search("pumpkin", vec![Lists::Risograph, Lists::MlmcEnglish], false)
+                .unwrap();
+        {
+            assert_eq!(
+                res,
+                IndexMap::from([
+                    (
+                        Lists::Risograph,
+                        vec![Color {
+                            name: "Pumpkin".into(),
+                            hex: "#ff6f4c".into(),
+                            meta: None
+                        }]
+                    ),
+                    (
+                        Lists::MlmcEnglish,
+                        vec![
+                            Color {
+                                name: "pumpkin".into(),
+                                hex: "#ee8527".into(),
+                                meta: None
+                            },
+                            Color {
+                                name: "pumpkin orange".into(),
+                                hex: "#f38121".into(),
+                                meta: None
+                            }
+                        ]
+                    )
+                ])
+            );
+        }
+
+        Ok(())
     }
 }
