@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::collections::HashMap;
 use std::env::var_os;
 use std::fs::File;
 use std::io::Write;
@@ -6,10 +7,11 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let lists = include_str!("./data/colorlists.json");
+    // let descriptions = include_str!("./data/descriptions.json");
     let out_dir = var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("colorlists.json");
 
-    // let mut command_file = File::options().append(true).open("./src/command.rs")?;
+    let mut command_file = File::options().append(true).open("./src/command.rs")?;
     let mut models_file = File::options().append(true).open("./src/models.rs")?;
 
     let list_names = lists
@@ -78,6 +80,64 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"        ]))"#)?;
     writeln!(&mut models_file, r#"    }}"#)?;
     writeln!(&mut models_file, r#"}}"#)?;
+
+    let lang_aliases = HashMap::from([
+        ("german", "de"),
+        ("french", "fr"),
+        ("japanese", "ja"),
+        ("chinese", "zh"),
+        ("hindi", "hi"),
+        ("spanish", "es"),
+        ("english", "en"),
+        ("dutch", "nl"),
+        ("finnish", "fi"),
+        ("korean", "ko"),
+        ("persian", "fa"),
+        ("polish", "pl"),
+        ("portuguese", "pt"),
+        ("romanian", "ro"),
+        ("russian", "ru"),
+        ("swedish", "sv"),
+    ]);
+
+    writeln!(
+        &mut command_file,
+        "#[derive(Args, Debug, Default, PartialEq, Eq)]"
+    )?;
+    writeln!(
+        &mut command_file,
+        "#[group(required = false, multiple = true)]"
+    )?;
+    writeln!(&mut command_file, "pub struct SourceList {{")?;
+
+    for n in list_names.iter() {
+        let n = snake_case(&n);
+        if let Some((_, v)) = lang_aliases.iter().find(|(k, _)| n.starts_with(*k)) {
+            // TODO: add descriptions
+            writeln!(
+                &mut command_file,
+                r#"    #[arg(long, visible_alias = "{v}")]"#
+            )?;
+        } else if let Some((_, v)) = lang_aliases
+            .iter()
+            .find(|(k, _)| n.starts_with("mlmc") && n.contains(*k))
+        {
+            writeln!(
+                &mut command_file,
+                r#"    #[arg(long, visible_alias = "mlmc-{v}")]"#
+            )?;
+        } else {
+            writeln!(&mut command_file, r#"    #[arg(long)]"#)?;
+        }
+        writeln!(&mut command_file, r#"    pub {n}: bool,"#)?;
+    }
+
+    for v in ["all_en", "all_de", "all_fr", "all_es", "all_zh"] {
+        writeln!(&mut command_file, r#"    #[arg(long)]"#)?;
+        writeln!(&mut command_file, r#"    pub {v}: bool,"#)?;
+    }
+
+    writeln!(&mut command_file, r#"}}"#)?;
 
     std::fs::write(&dest_path, lists)?;
     Ok(())
