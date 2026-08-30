@@ -5,12 +5,20 @@ use std::io::Write;
 use std::path::Path;
 
 fn main() -> Result<()> {
-    let s = include_str!("./data/colorlists.json");
+    let lists = include_str!("./data/colorlists.json");
     let out_dir = var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("colorlists.json");
 
     // let mut command_file = File::options().append(true).open("./src/command.rs")?;
     let mut models_file = File::options().append(true).open("./src/models.rs")?;
+
+    let list_names = lists
+        .lines()
+        .map(|line| line.trim())
+        .filter(|line| (!line.is_empty() || !line.starts_with("\"")) && line.contains("\": ["))
+        .filter_map(|line| line.split_once("\": "))
+        .filter_map(|(list_name, _)| list_name.strip_prefix("\""))
+        .collect::<Vec<_>>();
 
     // Write `Lists`
     writeln!(
@@ -19,20 +27,9 @@ fn main() -> Result<()> {
     )?;
     writeln!(&mut models_file, r#"pub enum Lists {{"#)?;
 
-    for (_idx, line) in s.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || !line.starts_with("\"") {
-            continue;
-        }
-        if line.contains("\": [") {
-            let (list_name, _) = line
-                .split_once("\": ")
-                .ok_or_else(|| anyhow::anyhow!("Failed to parse list name"))?;
-            if let Some(list_name) = list_name.strip_prefix("\"") {
-                let list_name = title_case_list_name(&list_name);
-                writeln!(&mut models_file, "    {},", list_name)?;
-            }
-        }
+    for n in list_names.iter() {
+        let n = title_case_list_name(&n);
+        writeln!(&mut models_file, "    {},", n)?;
     }
     writeln!(&mut models_file, r#"}}"#)?;
     writeln!(&mut models_file)?;
@@ -43,26 +40,16 @@ fn main() -> Result<()> {
         r#"#[derive(Serialize, Deserialize, Default, Debug)]"#
     )?;
     writeln!(&mut models_file, r#"pub struct ColorNameLists {{"#)?;
-    for (_idx, line) in s.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || !line.starts_with("\"") {
-            continue;
+
+    for n in list_names.iter() {
+        if is_camel_case(&n) {
+            writeln!(&mut models_file, r#"    #[serde(rename = "{n}")]"#)?;
         }
-        if line.contains("\": [") {
-            let (list_name, _) = line
-                .split_once("\": ")
-                .ok_or_else(|| anyhow::anyhow!("Failed to parse list name"))?;
-            if let Some(list_name) = list_name.strip_prefix("\"") {
-                if is_camel_case(&list_name) {
-                    writeln!(&mut models_file, r#"    #[serde(rename = "{list_name}")]"#)?;
-                }
-                writeln!(
-                    &mut models_file,
-                    r#"    pub {}: Vec<Color>,"#,
-                    snake_case(list_name)
-                )?;
-            }
-        }
+        writeln!(
+            &mut models_file,
+            r#"    pub {}: Vec<Color>,"#,
+            snake_case(n)
+        )?;
     }
     writeln!(&mut models_file, r#"}}"#)?;
     writeln!(&mut models_file)?;
@@ -78,31 +65,21 @@ fn main() -> Result<()> {
         r#"        let data = Self::read_from_file().context("Failed parsing data")?;"#
     )?;
     writeln!(&mut models_file, r#"        Ok(IndexMap::from(["#)?;
-    for (_idx, line) in s.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || !line.starts_with("\"") {
-            continue;
-        }
-        if line.contains("\": [") {
-            let (list_name, _) = line
-                .split_once("\": ")
-                .ok_or_else(|| anyhow::anyhow!("Failed to parse list name"))?;
-            if let Some(list_name) = list_name.strip_prefix("\"") {
-                let title_cased = title_case_list_name(&list_name);
-                let snake_cased = snake_case(&list_name);
-                writeln!(
-                    &mut models_file,
-                    r#"            (Lists::{title_cased}, data.{snake_cased}),"#
-                )?;
-            }
-        }
+
+    for n in list_names.iter() {
+        let title_cased = title_case_list_name(&n);
+        let snake_cased = snake_case(&n);
+        writeln!(
+            &mut models_file,
+            r#"            (Lists::{title_cased}, data.{snake_cased}),"#
+        )?;
     }
+
     writeln!(&mut models_file, r#"        ]))"#)?;
     writeln!(&mut models_file, r#"    }}"#)?;
     writeln!(&mut models_file, r#"}}"#)?;
 
-    std::fs::write(&dest_path, s)?;
-
+    std::fs::write(&dest_path, lists)?;
     Ok(())
 }
 
