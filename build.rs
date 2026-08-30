@@ -42,7 +42,7 @@ fn main() -> Result<()> {
         &mut models_file,
         r#"#[derive(Serialize, Deserialize, Default, Debug)]"#
     )?;
-    write!(&mut models_file, r#"pub struct ColorNameLists {{"#)?;
+    writeln!(&mut models_file, r#"pub struct ColorNameLists {{"#)?;
     for (_idx, line) in s.lines().enumerate() {
         let line = line.trim();
         if line.is_empty() || !line.starts_with("\"") {
@@ -53,29 +53,8 @@ fn main() -> Result<()> {
                 .split_once("\": ")
                 .ok_or_else(|| anyhow::anyhow!("Failed to parse list name"))?;
             if let Some(list_name) = list_name.strip_prefix("\"") {
-                match list_name {
-                    "chineseTraditional" => {
-                        writeln!(
-                            &mut models_file,
-                            r#"    #[serde(rename = "chineseTraditional")]"#
-                        )?;
-                    }
-                    "japaneseTraditional" => {
-                        writeln!(
-                            &mut models_file,
-                            r#"    #[serde(rename = "japaneseTraditional")]"#
-                        )?;
-                    }
-                    "leCorbusier" => {
-                        writeln!(&mut models_file, r#"    #[serde(rename = "leCorbusier")]"#)?;
-                    }
-                    "nbsIscc" => {
-                        writeln!(&mut models_file, r#"    #[serde(rename = "nbsIscc")]"#)?;
-                    }
-                    "sanzoWadaI" => {
-                        writeln!(&mut models_file, r#"    #[serde(rename = "sanzoWadaI")]"#)?;
-                    }
-                    _ => {}
+                if is_camel_case(&list_name) {
+                    writeln!(&mut models_file, r#"    #[serde(rename = "{list_name}")]"#)?;
                 }
                 writeln!(
                     &mut models_file,
@@ -157,4 +136,8 @@ fn snake_case(s: &str) -> String {
         }
     }
     res
+}
+
+fn is_camel_case(s: &str) -> bool {
+    s != s.to_lowercase() && s != s.to_uppercase() && !s.contains('_')
 }
