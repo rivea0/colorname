@@ -30,7 +30,7 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"pub enum Lists {{"#)?;
 
     for n in list_names.iter() {
-        let n = title_case_list_name(&n);
+        let n = title_case(n);
         writeln!(&mut models_file, "    {},", n)?;
     }
     writeln!(&mut models_file, r#"}}"#)?;
@@ -44,7 +44,7 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"pub struct ColorNameLists {{"#)?;
 
     for n in list_names.iter() {
-        if is_camel_case(&n) {
+        if is_camel_case(n) {
             writeln!(&mut models_file, r#"    #[serde(rename = "{n}")]"#)?;
         }
         writeln!(
@@ -69,8 +69,8 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"        Ok(IndexMap::from(["#)?;
 
     for n in list_names.iter() {
-        let title_cased = title_case_list_name(&n);
-        let snake_cased = snake_case(&n);
+        let title_cased = title_case(n);
+        let snake_cased = snake_case(n);
         writeln!(
             &mut models_file,
             r#"            (Lists::{title_cased}, data.{snake_cased}),"#
@@ -111,7 +111,7 @@ fn main() -> Result<()> {
     writeln!(&mut command_file, "pub struct SourceList {{")?;
 
     for n in list_names.iter() {
-        let n = snake_case(&n);
+        let n = snake_case(n);
         if let Some((_, v)) = lang_aliases.iter().find(|(k, _)| n.starts_with(*k)) {
             // TODO: add descriptions
             writeln!(
@@ -138,26 +138,128 @@ fn main() -> Result<()> {
     }
 
     writeln!(&mut command_file, r#"}}"#)?;
+    writeln!(&mut command_file)?;
+
+    writeln!(&mut command_file, r#"impl SourceList {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"    pub fn enabled_lists(&self) -> Vec<Lists> {{"#
+    )?;
+    writeln!(&mut command_file, r#"        let mut v = vec![];"#)?;
+
+    for n in list_names.iter() {
+        let n = snake_case(n);
+        writeln!(&mut command_file, r#"        if self.{n} {{"#)?;
+        writeln!(
+            &mut command_file,
+            r#"            v.push(Lists::{});"#,
+            title_case(&n)
+        )?;
+        writeln!(&mut command_file, r#"        }}"#)?;
+    }
+
+    writeln!(&mut command_file, r#"        if self.all_en {{"#)?;
+    writeln!(&mut command_file, r#"            let en_lists = ["#)?;
+    writeln!(&mut command_file, r#"                Lists::Basic,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Html,"#)?;
+    writeln!(&mut command_file, r#"                Lists::MlmcEnglish,"#)?;
+    writeln!(&mut command_file, r#"                Lists::NbsIscc,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Ntc,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Osxcrayons,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Ral,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Ridgway,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Risograph,"#)?;
+    writeln!(&mut command_file, r#"                Lists::SanzoWadaI,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Thesaurus,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Werner,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Windows,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Wikipedia,"#)?;
+    writeln!(&mut command_file, r#"                Lists::Xkcd,"#)?;
+    writeln!(&mut command_file, r#"                Lists::X11,"#)?;
+    writeln!(&mut command_file, r#"            ];"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            for list_name in en_lists {{"#
+    )?;
+    writeln!(&mut command_file, r#"                v.push(list_name);"#)?;
+    writeln!(&mut command_file, r#"            }}"#)?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(&mut command_file, r#"        if self.all_fr {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            let fr_lists = [Lists::French, Lists::LeCorbusier, Lists::MlmcFrench];"#
+    )?;
+    writeln!(
+        &mut command_file,
+        r#"            for list_name in fr_lists {{"#
+    )?;
+    writeln!(&mut command_file, r#"                v.push(list_name);"#)?;
+    writeln!(&mut command_file, r#"            }}"#)?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(&mut command_file, r#"        if self.all_de {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            let de_lists = [Lists::German, Lists::MlmcGerman];"#
+    )?;
+    writeln!(
+        &mut command_file,
+        r#"            for list_name in de_lists {{"#
+    )?;
+    writeln!(&mut command_file, r#"                v.push(list_name);"#)?;
+    writeln!(&mut command_file, r#"            }}"#)?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(&mut command_file, r#"        if self.all_es {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            let es_lists = [Lists::Spanish, Lists::MlmcSpanish];"#
+    )?;
+    writeln!(
+        &mut command_file,
+        r#"            for list_name in es_lists {{"#
+    )?;
+    writeln!(&mut command_file, r#"                v.push(list_name);"#)?;
+    writeln!(&mut command_file, r#"            }}"#)?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(&mut command_file, r#"        if self.all_zh {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            let zh_lists = [Lists::ChineseTraditional, Lists::MlmcChinese];"#
+    )?;
+    writeln!(
+        &mut command_file,
+        r#"            for list_name in zh_lists {{"#
+    )?;
+    writeln!(&mut command_file, r#"                v.push(list_name);"#)?;
+    writeln!(&mut command_file, r#"            }}"#)?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(
+        &mut command_file,
+        r#"        // By default, list is wikipedia"#
+    )?;
+    writeln!(&mut command_file, r#"        if v.is_empty() {{"#)?;
+    writeln!(
+        &mut command_file,
+        r#"            v.push(Lists::Wikipedia);"#
+    )?;
+    writeln!(&mut command_file, r#"        }}"#)?;
+    writeln!(&mut command_file, r#"        v"#)?;
+    writeln!(&mut command_file, r#"    }}"#)?;
+    writeln!(&mut command_file, r#"}}"#)?;
 
     std::fs::write(&dest_path, lists)?;
     Ok(())
 }
 
+// Snake case to title case
 fn title_case(s: &str) -> String {
-    let mut s = s.to_string();
-    format!("{}{s}", s.remove(0).to_uppercase())
-}
-
-fn title_case_list_name(list_name: &str) -> String {
-    match list_name {
-        s if s.starts_with("mlmc") => {
-            let (part1, part2) = s.rsplit_once("_").unwrap();
-            let part1 = title_case(part1);
-            let part2 = title_case(part2);
-            format!("{part1}{part2}")
-        }
-        _ => title_case(&list_name),
-    }
+    s.split("_")
+        .filter(|w| !w.is_empty())
+        .map(|w| {
+            let mut w = w.to_string();
+            format!("{}{w}", w.remove(0).to_uppercase())
+        })
+        .collect::<Vec<_>>()
+        .join("")
 }
 
 fn snake_case(s: &str) -> String {
