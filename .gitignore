@@ -3,3 +3,5 @@
 *.csv
 *.html
 *.json
+!.colorlists.json
+!descriptions.json
