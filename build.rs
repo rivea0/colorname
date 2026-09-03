@@ -7,7 +7,7 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let lists = include_str!("./data/colorlists.json");
-    // let descriptions = include_str!("./data/descriptions.json");
+    let descriptions = include_str!("./data/descriptions.json");
     let out_dir = var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("colorlists.json");
 
@@ -28,6 +28,27 @@ fn main() -> Result<()> {
         "#[derive(Debug, Hash, PartialEq, Eq, Serialize)]"
     )?;
     writeln!(&mut models_file, r#"pub enum Lists {{"#)?;
+
+    let mut h: HashMap<_, _> = HashMap::new();
+    let desc_lines = descriptions.lines().collect::<Vec<_>>();
+    for n in list_names.iter() {
+        for (idx, line) in desc_lines.iter().enumerate() {
+            let line = line.trim();
+            if (!line.is_empty() || !line.starts_with("\"")) && line.contains("\": {") {
+                let (nme, _) = line.split_once("\": ").unwrap();
+                let nme = nme.strip_prefix("\"").unwrap();
+                let snake_cased = snake_case(nme);
+                if snake_cased.as_str() == snake_case(n).as_str()
+                    && let Some(desc_line) = desc_lines.get(idx + 2)
+                    && desc_line.contains("description")
+                {
+                    let (_, val) = desc_line.split_once("\": \"").unwrap();
+                    let val = val.strip_suffix("\",").unwrap_or(val);
+                    h.insert(snake_cased, val);
+                }
+            }
+        }
+    }
 
     for n in list_names.iter() {
         let n = title_case(n);
@@ -82,22 +103,22 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"}}"#)?;
 
     let lang_aliases = HashMap::from([
-        ("german", "de"),
-        ("french", "fr"),
-        ("japanese", "ja"),
-        ("chinese", "zh"),
-        ("hindi", "hi"),
-        ("spanish", "es"),
-        ("english", "en"),
-        ("dutch", "nl"),
-        ("finnish", "fi"),
-        ("korean", "ko"),
-        ("persian", "fa"),
-        ("polish", "pl"),
-        ("portuguese", "pt"),
-        ("romanian", "ro"),
-        ("russian", "ru"),
-        ("swedish", "sv"),
+        ("de", "german"),
+        ("fr", "french"),
+        ("ja", "japanese"),
+        ("zh", "chinese"),
+        ("hi", "hindi"),
+        ("es", "spanish"),
+        ("en", "english"),
+        ("nl", "dutch"),
+        ("fi", "finnish"),
+        ("ko", "korean"),
+        ("fa", "persian"),
+        ("pl", "polish"),
+        ("pt", "portuguese"),
+        ("ro", "romanian"),
+        ("ru", "russian"),
+        ("sv", "swedish"),
     ]);
 
     writeln!(
@@ -112,19 +133,19 @@ fn main() -> Result<()> {
 
     for n in list_names.iter() {
         let n = snake_case(n);
-        if let Some((_, v)) = lang_aliases.iter().find(|(k, _)| n.starts_with(*k)) {
-            // TODO: add descriptions
+        writeln!(&mut command_file, r#"    /// {}"#, h.get(&n).unwrap())?;
+        if let Some((k, _)) = lang_aliases.iter().find(|(_, v)| n.starts_with(*v)) {
             writeln!(
                 &mut command_file,
-                r#"    #[arg(long, visible_alias = "{v}")]"#
+                r#"    #[arg(long, visible_alias = "{k}")]"#
             )?;
-        } else if let Some((_, v)) = lang_aliases
+        } else if let Some((k, _)) = lang_aliases
             .iter()
-            .find(|(k, _)| n.starts_with("mlmc") && n.contains(*k))
+            .find(|(_, v)| n.starts_with("mlmc") && n.contains(*v))
         {
             writeln!(
                 &mut command_file,
-                r#"    #[arg(long, visible_alias = "mlmc-{v}")]"#
+                r#"    #[arg(long, visible_alias = "mlmc-{k}")]"#
             )?;
         } else {
             writeln!(&mut command_file, r#"    #[arg(long)]"#)?;
@@ -133,6 +154,13 @@ fn main() -> Result<()> {
     }
 
     for v in ["all_en", "all_de", "all_fr", "all_es", "all_zh"] {
+        let (_, alias) = v.split_once('_').unwrap();
+        let lang = lang_aliases.get(alias).unwrap();
+        writeln!(
+            &mut command_file,
+            r#"    /// Search in all {} language lists"#,
+            title_case(lang)
+        )?;
         writeln!(&mut command_file, r#"    #[arg(long)]"#)?;
         writeln!(&mut command_file, r#"    pub {v}: bool,"#)?;
     }
