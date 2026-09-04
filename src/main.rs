@@ -1,13 +1,12 @@
 use anyhow::Result;
 use clap::Parser;
 use colorname::models::ColorNameLists;
-use comfy_table::{Table, presets::UTF8_FULL};
 
 mod command;
 mod helpers;
 
 use crate::command::Cli;
-use crate::helpers::{set_table_header, set_table_rows, write_to_file};
+use crate::helpers::{create_table, write_to_file};
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -29,11 +28,8 @@ fn main() -> Result<()> {
 
             // If truecolor is not supported, will not render as expected (https://github.com/SergioBenitez/yansi/issues/15)
             for (list_name, values) in result {
-                let mut table = Table::new();
-                table.load_style(UTF8_FULL.with_solid_inner_borders());
-                set_table_header(&mut table, list_name, with_color);
-                set_table_rows(&mut table, values, with_color, args.with_info)?;
-
+                println!("\nList: {list_name}");
+                let table = create_table(values, with_color, args.with_info)?;
                 println!("{table}");
             }
         }

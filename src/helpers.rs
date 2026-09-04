@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use comfy_table::{Attribute, Cell, Color, Row, Table, presets::UTF8_FULL};
+use comfy_table::{Attribute, Cell, Color, Table, presets::UTF8_FULL};
 use indexmap::{IndexMap, IndexSet};
 use std::fmt::Write;
 use std::fs::File;
@@ -166,8 +166,16 @@ pub fn get_rgb_value(hex_str: &str) -> Result<[u8; 3]> {
     Ok([r, g, b])
 }
 
-pub fn set_table_header(table: &mut Table, list_name: Lists, styled: bool) {
-    println!("\nList: {list_name}");
+pub fn create_table(values: Vec<CrateColor>, styled: bool, with_info: bool) -> Result<Table> {
+    let mut table = Table::new();
+    table.load_style(UTF8_FULL.with_solid_inner_borders());
+    set_table_header(&mut table, styled);
+    set_table_rows(&mut table, values, styled, with_info)?;
+
+    Ok(table)
+}
+
+pub fn set_table_header(table: &mut Table, styled: bool) {
     if styled {
         table.set_header(vec![
             Cell::new("name").add_attribute(Attribute::Bold),
@@ -181,11 +189,11 @@ pub fn set_table_header(table: &mut Table, list_name: Lists, styled: bool) {
 pub fn set_table_rows(
     table: &mut Table,
     values: Vec<CrateColor>,
-    with_color: bool,
+    styled: bool,
     with_info: bool,
 ) -> Result<()> {
     for value in values {
-        if !with_color {
+        if !styled {
             let mut v = vec![vec![value.name, value.hex]];
             if with_info && let Some(meta_values) = value.meta {
                 for (key, val) in meta_values {
@@ -202,6 +210,11 @@ pub fn set_table_rows(
                     b: rgb_vals[2],
                 }),
                 Cell::new(value.hex).fg(Color::Rgb {
+                    r: rgb_vals[0],
+                    g: rgb_vals[1],
+                    b: rgb_vals[2],
+                }),
+                Cell::new("    ".to_string()).bg(Color::Rgb {
                     r: rgb_vals[0],
                     g: rgb_vals[1],
                     b: rgb_vals[2],
@@ -385,7 +398,7 @@ mod tests {
         let res = IndexMap::from([
             (
                 Lists::Wikipedia,
-                vec![Color {
+                vec![CrateColor {
                     name: "black".to_string(),
                     hex: "#000000".to_string(),
                     meta: Some(BTreeMap::from([(
@@ -396,7 +409,7 @@ mod tests {
             ),
             (
                 Lists::Thesaurus,
-                vec![Color {
+                vec![CrateColor {
                     name: "Black".to_string(),
                     hex: "#000000".to_string(),
                     meta: Some(BTreeMap::from([("category".into(), "black".into())])),
@@ -404,7 +417,7 @@ mod tests {
             ),
             (
                 Lists::Basic,
-                vec![Color {
+                vec![CrateColor {
                     name: "black".to_string(),
                     hex: "#000000".to_string(),
                     meta: None,
@@ -482,7 +495,7 @@ mod tests {
 
         let res = IndexMap::from([(
             Lists::Basic,
-            vec![Color {
+            vec![CrateColor {
                 name: "black".to_string(),
                 hex: "#000000".to_string(),
                 meta: None,
@@ -507,7 +520,7 @@ mod tests {
 
         let res = IndexMap::from([(
             Lists::Wikipedia,
-            vec![Color {
+            vec![CrateColor {
                 name: "black".to_string(),
                 hex: "#000000".to_string(),
                 meta: Some(BTreeMap::from([(
