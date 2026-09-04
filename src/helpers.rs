@@ -1,17 +1,17 @@
 use anyhow::{Context, Result, bail};
-use indexmap::{IndexSet, IndexMap};
+use comfy_table::{Attribute, Cell, Color, Row, Table, presets::UTF8_FULL};
+use indexmap::{IndexMap, IndexSet};
 use std::fmt::Write;
 use std::fs::File;
 use std::io::Write as IoWrite;
 use std::path::Path;
-use yansi::Paint;
 
 use crate::command::OutputFormats;
-use colorname::models::{Color, Lists};
+use colorname::models::{Color as CrateColor, Lists};
 
 pub fn write_to_file(
     file_type: OutputFormats,
-    result: &IndexMap<Lists, Vec<Color>>,
+    result: &IndexMap<Lists, Vec<CrateColor>>,
     file_path: impl AsRef<Path>,
 ) -> Result<()> {
     let file_path = file_path.as_ref();
@@ -81,7 +81,7 @@ pub fn write_to_file(
     Ok(())
 }
 
-fn create_html_string(result: &IndexMap<Lists, Vec<Color>>) -> Result<String> {
+fn create_html_string(result: &IndexMap<Lists, Vec<CrateColor>>) -> Result<String> {
     let mut rows = String::new();
     for (list_name, colors) in result.iter() {
         writeln!(rows, "    <h1>List: {list_name}</h1>")?;
@@ -166,48 +166,54 @@ pub fn get_rgb_value(hex_str: &str) -> Result<[u8; 3]> {
     Ok([r, g, b])
 }
 
-pub fn print_header(list_name: Lists, styled: bool) {
+pub fn set_table_header(table: &mut Table, list_name: Lists, styled: bool) {
     println!("\nList: {list_name}");
     if styled {
-        println!(
-            "{0: <30} | {1: <7} | {2: <5}",
-            "name".bold(),
-            "hex".bold(),
-            ""
-        );
-        println!("------------------------------------------------");
+        table.set_header(vec![
+            Cell::new("name").add_attribute(Attribute::Bold),
+            Cell::new("hex").add_attribute(Attribute::Bold),
+        ]);
     } else {
-        println!("{0: <30} | {1: <7}", "name", "hex");
-        println!("------------------------------------------------");
+        table.set_header(vec!["name", "hex"]);
     }
 }
 
-pub fn print_values(values: Vec<Color>, with_color: bool, with_info: bool) -> Result<()> {
+pub fn set_table_rows(
+    table: &mut Table,
+    values: Vec<CrateColor>,
+    with_color: bool,
+    with_info: bool,
+) -> Result<()> {
     for value in values {
         if !with_color {
-            println!("{0: <30} | {1: <7}", value.name, value.hex);
+            let mut v = vec![vec![value.name, value.hex]];
             if with_info && let Some(meta_values) = value.meta {
                 for (key, val) in meta_values {
-                    println!("{key}: {val}\n");
+                    v.push(vec![format!("{key}: {val}")]);
                 }
             }
+            table.add_rows(v);
         } else {
             let rgb_vals = get_rgb_value(&value.hex)?;
-            println!(
-                "{0: <30} | {1: <7} | {2: <5}",
-                value.name.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
-                value.hex.rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2]),
-                "     "
-                    .to_string()
-                    .on_rgb(rgb_vals[0], rgb_vals[1], rgb_vals[2])
-            );
+            let mut v = vec![vec![
+                Cell::new(value.name).fg(Color::Rgb {
+                    r: rgb_vals[0],
+                    g: rgb_vals[1],
+                    b: rgb_vals[2],
+                }),
+                Cell::new(value.hex).fg(Color::Rgb {
+                    r: rgb_vals[0],
+                    g: rgb_vals[1],
+                    b: rgb_vals[2],
+                }),
+            ]];
             if with_info && let Some(meta_values) = value.meta {
                 for (key, val) in meta_values {
-                    println!("{key}: {val}\n");
+                    v.push(vec![Cell::new(format!("{key}: {val}"))]);
                 }
             }
+            table.add_rows(v);
         }
-        println!("------------------------------------------------");
     }
 
     Ok(())

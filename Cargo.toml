@@ -11,6 +11,7 @@ serde_json = "1.0"
 yansi = "=1.0.1"
 csv = "1.4.0"
 indexmap = { version = "2.14.0", features = ["serde"] }
+comfy-table = "8.0.0"
 
 [build-dependencies]
 anyhow = "1"
