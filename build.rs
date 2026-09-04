@@ -8,11 +8,10 @@ use std::path::Path;
 fn main() -> Result<()> {
     let lists = include_str!("./data/colorlists.json");
     let descriptions = include_str!("./data/descriptions.json");
+    let command_file_path = "./src/command.rs";
+    let models_file_path = "./src/models.rs";
     let out_dir = var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("colorlists.json");
-
-    let mut command_file = File::options().append(true).open("./src/command.rs")?;
-    let mut models_file = File::options().append(true).open("./src/models.rs")?;
 
     let list_names = lists
         .lines()
@@ -21,13 +20,6 @@ fn main() -> Result<()> {
         .filter_map(|line| line.split_once("\": "))
         .filter_map(|(list_name, _)| list_name.strip_prefix("\""))
         .collect::<Vec<_>>();
-
-    // Write `Lists`
-    writeln!(
-        &mut models_file,
-        "#[derive(Debug, Hash, PartialEq, Eq, Serialize)]"
-    )?;
-    writeln!(&mut models_file, r#"pub enum Lists {{"#)?;
 
     let mut h: HashMap<_, _> = HashMap::new();
     let desc_lines = descriptions.lines().collect::<Vec<_>>();
@@ -49,6 +41,95 @@ fn main() -> Result<()> {
             }
         }
     }
+
+    let lang_aliases = HashMap::from([
+        ("de", "german"),
+        ("fr", "french"),
+        ("ja", "japanese"),
+        ("zh", "chinese"),
+        ("hi", "hindi"),
+        ("es", "spanish"),
+        ("en", "english"),
+        ("nl", "dutch"),
+        ("fi", "finnish"),
+        ("ko", "korean"),
+        ("fa", "persian"),
+        ("pl", "polish"),
+        ("pt", "portuguese"),
+        ("ro", "romanian"),
+        ("ru", "russian"),
+        ("sv", "swedish"),
+    ]);
+
+    let s = std::fs::read_to_string(command_file_path)?;
+    let mut update_command_file = true;
+    for line in s.lines() {
+        if line.contains("pub struct SourceList") {
+            update_command_file = false;
+        }
+    }
+
+    if update_command_file {
+        write_to_command_file(command_file_path, h, lang_aliases, &list_names)?;
+    }
+
+    let s = std::fs::read_to_string(models_file_path)?;
+    let mut update_models_file = true;
+    for line in s.lines() {
+        if line.contains("pub enum Lists") {
+            update_models_file = false;
+        }
+    }
+
+    if update_models_file {
+        write_to_models_file(models_file_path, &list_names)?;
+    }
+
+    std::fs::write(&dest_path, lists)?;
+    Ok(())
+}
+
+// Snake case to title case
+fn title_case(s: &str) -> String {
+    s.split("_")
+        .filter(|w| !w.is_empty())
+        .map(|w| {
+            let mut w = w.to_string();
+            format!("{}{w}", w.remove(0).to_uppercase())
+        })
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn snake_case(s: &str) -> String {
+    let mut res = String::new();
+    for c in s.chars() {
+        if c.is_uppercase() {
+            if !res.is_empty() {
+                res.push('_');
+            }
+            res.extend(c.to_lowercase());
+        } else {
+            res.push(c);
+        }
+    }
+    res
+}
+
+fn is_camel_case(s: &str) -> bool {
+    s != s.to_lowercase() && s != s.to_uppercase() && !s.contains('_')
+}
+
+fn write_to_models_file(models_file_path: impl AsRef<Path>, list_names: &Vec<&str>) -> Result<()> {
+    let models_file_path = models_file_path.as_ref();
+    let mut models_file = File::options().append(true).open(models_file_path)?;
+
+    // Write `Lists`
+    writeln!(
+        &mut models_file,
+        "#[derive(Debug, Hash, PartialEq, Eq, Serialize)]"
+    )?;
+    writeln!(&mut models_file, r#"pub enum Lists {{"#)?;
 
     for n in list_names.iter() {
         let n = title_case(n);
@@ -102,24 +183,17 @@ fn main() -> Result<()> {
     writeln!(&mut models_file, r#"    }}"#)?;
     writeln!(&mut models_file, r#"}}"#)?;
 
-    let lang_aliases = HashMap::from([
-        ("de", "german"),
-        ("fr", "french"),
-        ("ja", "japanese"),
-        ("zh", "chinese"),
-        ("hi", "hindi"),
-        ("es", "spanish"),
-        ("en", "english"),
-        ("nl", "dutch"),
-        ("fi", "finnish"),
-        ("ko", "korean"),
-        ("fa", "persian"),
-        ("pl", "polish"),
-        ("pt", "portuguese"),
-        ("ro", "romanian"),
-        ("ru", "russian"),
-        ("sv", "swedish"),
-    ]);
+    Ok(())
+}
+
+fn write_to_command_file(
+    command_file_path: impl AsRef<Path>,
+    desc_hash_map: HashMap<String, &str>,
+    lang_aliases: HashMap<&str, &str>,
+    list_names: &Vec<&str>,
+) -> Result<()> {
+    let command_file_path = command_file_path.as_ref();
+    let mut command_file = File::options().append(true).open(command_file_path)?;
 
     writeln!(
         &mut command_file,
@@ -133,7 +207,11 @@ fn main() -> Result<()> {
 
     for n in list_names.iter() {
         let n = snake_case(n);
-        writeln!(&mut command_file, r#"    /// {}"#, h.get(&n).unwrap())?;
+        writeln!(
+            &mut command_file,
+            r#"    /// {}"#,
+            desc_hash_map.get(&n).unwrap()
+        )?;
         if let Some((k, _)) = lang_aliases.iter().find(|(_, v)| n.starts_with(*v)) {
             writeln!(
                 &mut command_file,
@@ -274,37 +352,5 @@ fn main() -> Result<()> {
     writeln!(&mut command_file, r#"    }}"#)?;
     writeln!(&mut command_file, r#"}}"#)?;
 
-    std::fs::write(&dest_path, lists)?;
     Ok(())
-}
-
-// Snake case to title case
-fn title_case(s: &str) -> String {
-    s.split("_")
-        .filter(|w| !w.is_empty())
-        .map(|w| {
-            let mut w = w.to_string();
-            format!("{}{w}", w.remove(0).to_uppercase())
-        })
-        .collect::<Vec<_>>()
-        .join("")
-}
-
-fn snake_case(s: &str) -> String {
-    let mut res = String::new();
-    for c in s.chars() {
-        if c.is_uppercase() {
-            if !res.is_empty() {
-                res.push('_');
-            }
-            res.extend(c.to_lowercase());
-        } else {
-            res.push(c);
-        }
-    }
-    res
-}
-
-fn is_camel_case(s: &str) -> bool {
-    s != s.to_lowercase() && s != s.to_uppercase() && !s.contains('_')
 }
