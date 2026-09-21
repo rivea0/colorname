@@ -6,12 +6,12 @@ use std::path::Path;
 
 pub fn write_to_command_file(
     command_file_path: impl AsRef<Path>,
-    desc_hash_map: &HashMap<String, &str>,
     lang_aliases: &HashMap<&str, &str>,
     list_names: &Vec<&str>,
 ) -> Result<()> {
     let command_file_path = command_file_path.as_ref();
     let mut command_file = File::options().append(true).open(command_file_path)?;
+    let desc_hash_map = extract_from_descriptions_file(list_names, "description")?;
 
     writeln!(
         &mut command_file,
@@ -247,10 +247,10 @@ pub fn write_to_readme_file(
     readme_file_path: impl AsRef<Path>,
     list_names: &Vec<&str>,
     lang_aliases: &HashMap<&str, &str>,
-    desc_hash_map: HashMap<String, &str>,
-    source_hash_map: HashMap<String, &str>,
 ) -> Result<()> {
     let readme_file_path = readme_file_path.as_ref();
+    let desc_hash_map = extract_from_descriptions_file(list_names, "description")?;
+    let source_hash_map = extract_from_descriptions_file(list_names, "source")?;
     let start_marker = "<!-- start options -->";
     let end_marker = "<!-- end options -->";
 
@@ -339,4 +339,42 @@ fn title_case(s: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join("")
+}
+
+fn extract_from_descriptions_file(
+    list_names: &Vec<&str>,
+    key: &str,
+) -> Result<HashMap<String, String>> {
+    let descriptions_file = include_str!("./data/descriptions.json");
+    let mut h: HashMap<_, _> = HashMap::new();
+    let desc_lines = descriptions_file.lines().collect::<Vec<_>>();
+
+    // the line offsets from the key (list_name)
+    let line_offsets = HashMap::from([
+        ("title", 1),
+        ("description", 2),
+        ("source", 3),
+        ("key", 4),
+        ("license", 5),
+    ]);
+
+    for n in list_names.iter() {
+        for (idx, line) in desc_lines.iter().enumerate() {
+            let line = line.trim();
+            if (!line.is_empty() || !line.starts_with("\"")) && line.contains("\": {") {
+                let (nme, _) = line.split_once("\": ").unwrap();
+                let nme = nme.strip_prefix("\"").unwrap();
+                let snake_cased = snake_case(nme);
+                if snake_cased.as_str() == snake_case(n).as_str()
+                    && let Some(desc_line) = desc_lines.get(idx + line_offsets.get(key).unwrap())
+                    && desc_line.contains(key)
+                {
+                    let (_, val) = desc_line.split_once("\": \"").unwrap();
+                    let val = val.strip_suffix("\",").unwrap_or(val);
+                    h.insert(snake_cased, val.to_string());
+                }
+            }
+        }
+    }
+    Ok(h)
 }
