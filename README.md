@@ -43,7 +43,7 @@ Include the metadata for colors if it exists:
 colorname sky --with-info
 ```
 
-
+<!-- start options -->
 ### Options
 
 #### Lists
@@ -100,85 +100,85 @@ Source: https://www.lescouleurs.ch/en/the-colours/63-colours
 
 > "Chinese color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-dutch` (alias = `--mlmc-nl`)
 
 > "Dutch color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-english` (alias = `--mlmc-en`)
 
 > "English color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-finnish` (alias = `--mlmc-fi`)
 
 > "Finnish color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-french` (alias = `--mlmc-fr`)
 
 > "French color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-german` (alias = `--mlmc-de`)
 
 > "German color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-korean` (alias = `--mlmc-ko`)
 
 > "Korean color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-persian` (alias = `--mlmc-fa`)
 
 > "Persian color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-polish` (alias = `--mlmc-pl`)
 
 > "Polish color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-portuguese` (alias = `--mlmc-pt`)
 
 > "Portuguese color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-romanian` (alias = `--mlmc-ro`)
 
 > "Romanian color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-russian` (alias = `--mlmc-ru`)
 
 > "Russian color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-spanish` (alias = `--mlmc-es`)
 
 > "Spanish color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--mlmc-swedish` (alias = `--mlmc-sv`)
 
 > "Swedish color names from the UW Interactive Data Lab's Many Languages Many Colors project, a research effort exploring how different languages divide the color spectrum."
 
-Source: https://idl.uw.edu/color-naming-in-different-languages
+Source: https://idl.uw.edu/color-naming-in-different-languages/
 
 ##### `--nbs-iscc`
 
@@ -196,13 +196,13 @@ Source: https://github.com/colorjs/color-namer/tree/master/lib/colors
 
 > "Color names used in the OS X color picker GUI."
 
-Source: https://www.randomactsofsentience.com/2013/06/os-x-crayon-color-hex-table.html
+Source: http://www.randomactsofsentience.com/2013/06/os-x-crayon-color-hex-table.html
 
 ##### `--ral`
 
 > "RAL color matching names."
 
-Source: https://jpederson.com/colornerd
+Source: https://jpederson.com/colornerd/
 
 ##### `--ridgway`
 
@@ -220,7 +220,7 @@ Source: https://github.com/mattdesl/riso-colors
 
 > "Names from Wada Sanzō (和田 三造) Colors Dictionary, Volume I."
 
-Source: https://sanzo-wada.dmbk.io
+Source: https://sanzo-wada.dmbk.io/
 
 ##### `--spanish` (alias = `--es`)
 
@@ -232,13 +232,19 @@ Source: https://github.com/meodai/nombres-de-colores
 
 > "The Color Thesaurus by Ingrid Sundberg. As a writer, she collected color names to explore the emotion of a scene and create variety in her writing."
 
-Source: https://ingridsnotes.wordpress.com/2014/02/04/the-color-thesaurus
+Source: https://ingridsnotes.wordpress.com/2014/02/04/the-color-thesaurus/
 
 ##### `--werner`
 
-> "All colors from the book Werner's Nomenclature of Colours, collected and described in the late 18th century."
+> "All colors from the book Werner's Nomenclature of Colours, collected and described in the late 18th century"
 
-Source: https://www.c82.net/werner
+Source: https://www.c82.net/werner/
+
+##### `--wikipedia`
+
+> "A list of color names scraped from Wikipedia."
+
+Source: https://github.com/meodai/wikipedia-color-names
 
 ##### `--windows`
 
@@ -246,23 +252,20 @@ Source: https://www.c82.net/werner
 
 Source: https://docs.microsoft.com/en-us/dotnet/api/system.windows.media.colors?view=windowsdesktop-6.0
 
-##### `--wikipedia` (Default)
-
-> "A list of color names scraped from Wikipedia."
-
-Source: https://github.com/meodai/wikipedia-color-names
-
-##### `--xkcd`
-
-> "The 954 most common RGB monitor colors, as defined by several hundred thousand participants in the XKCD color name survey."
-
-Source: https://xkcd.com/color/rgb
-
 ##### `--x11`
 
 > "Standard Xlib or X11 protocol color names."
 
 Source: https://en.wikipedia.org/wiki/X11_color_names
+
+##### `--xkcd`
+
+> "The 954 most common RGB monitor colors, as defined by several hundred thousand participants in the XKCD color name survey."
+
+Source: https://xkcd.com/color/rgb/
+
+
+<!-- end options -->
 
 #### Other options
 
@@ -312,21 +315,31 @@ If metadata exists for colors in the list, include the metadata.
 #### Output formats
 
 ##### `--html`
-Export to HTML. Creates `colorname-output.html` in current directory.
+Export to HTML. Requires the `file_path` option to be set.
+
+```
+colorname sky --output=html --file-path=result.html
+```
 
 ##### `--json`
-Export to JSON. Creates `colorname-output.json` in current directory.
+Export to JSON. Requires the `file_path` option to be set.
+
+```
+colorname sky --output json --file-path /path/to/result.json
+```
 
 ##### `--csv`
-Export to CSV. Creates `colorname-output.csv` in current directory.
+Export to CSV. Requires the `file_path` option to be set.
+
+```
+colorname sky --output csv --file-path result.csv
+```
 
 #### Other options
 
 ##### `--quiet` (`-q`)
 Don't display output in terminal if the output format is given
 
-
-
-
+---
 
 Note that if you use multiple lists, there might be duplicates for generic colors, i.e., pink.

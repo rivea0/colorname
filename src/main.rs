@@ -34,7 +34,7 @@ fn main() -> Result<()> {
             }
         }
     } else {
-        println!("{} is not found", &args.pattern);
+        println!("{} is not found", args.pattern);
     }
 
     Ok(())
