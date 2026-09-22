@@ -26,7 +26,6 @@ fn main() -> Result<()> {
                 with_color = false;
             }
 
-            // If truecolor is not supported, will not render as expected (https://github.com/SergioBenitez/yansi/issues/15)
             for (list_name, values) in result {
                 println!("\nList: {list_name}");
                 let table = create_table(values, with_color, args.with_info)?;
