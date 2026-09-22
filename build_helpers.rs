@@ -195,6 +195,7 @@ pub fn write_to_models_file(
     writeln!(&mut models_file)?;
 
     // Write `ColorNameLists`
+    writeln!(&mut models_file, "/// Color name lists in the collection")?;
     writeln!(
         &mut models_file,
         r#"#[derive(Serialize, Deserialize, Default, Debug)]"#
