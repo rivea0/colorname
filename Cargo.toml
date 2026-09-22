@@ -2,6 +2,13 @@
 name = "colorname"
 version = "0.1.0"
 edition = "2024"
+description = "A simple CLI tool to get color data based on color names in multiple languages from various lists."
+license = "MIT"
+readme = "README.md"
+keywords = ["cli", "colors"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/rivea0/colorname"
+repository = "https://github.com/rivea0/colorname"
 
 [dependencies]
 anyhow = "1.0"
