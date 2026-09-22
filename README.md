@@ -2,6 +2,11 @@
 Get color data based on names in multiple languages. (Color name data collected from various sources, based on https://github.com/meodai/color-name-lists)
 
 ## Installation
+You can install via `cargo install`:
+
+```
+cargo install colorname
+```
 
 ## Usage
 
@@ -338,7 +343,7 @@ colorname sky --output csv --file-path result.csv
 #### Other options
 
 ##### `--quiet` (`-q`)
-Don't display output in terminal if the output format is given
+Don't display output in terminal if the output format is given.
 
 ---
 
